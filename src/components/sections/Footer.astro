@@ -1,0 +1,16 @@
+---
+import { instagramUrl, sitio } from '@/lib/sitio';
+
+const anio = new Date().getFullYear();
+---
+
+<footer class="border-t">
+  <div
+    class="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground md:flex-row md:justify-between"
+  >
+    <p>© {anio} {sitio.nombre} · {sitio.organizacion}</p>
+    <a href={instagramUrl()} target="_blank" rel="noopener noreferrer" class="underline underline-offset-4">
+      @{sitio.contacto.instagram}
+    </a>
+  </div>
+</footer>

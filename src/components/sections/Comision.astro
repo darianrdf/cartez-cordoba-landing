@@ -1,0 +1,42 @@
+---
+import { datosComision, filasDestacadas } from '@/lib/comision';
+
+const filas = filasDestacadas(datosComision.miembros);
+---
+
+<section id="comision" aria-labelledby="comision-titulo" class="border-b">
+  <div class="mx-auto max-w-5xl space-y-10 px-4 py-16">
+    <div class="space-y-2 text-center">
+      <h2 id="comision-titulo" class="text-2xl font-bold md:text-3xl">La Comisión</h2>
+      <p class="text-muted-foreground">Etapa {datosComision.etapa}</p>
+    </div>
+
+    <div class="space-y-6">
+      {
+        filas.map((fila) => (
+          <ul class="flex flex-wrap justify-center gap-4">
+            {fila.map(({ nombre, cargo, foto }) => (
+              <li class="w-[calc(50%-0.5rem)] max-w-56 sm:w-48">
+                <article class="flex h-full flex-col items-center gap-3 rounded-lg border bg-card p-4 text-center text-card-foreground">
+                  <img
+                    src={foto}
+                    alt={`Foto de ${nombre}`}
+                    width="160"
+                    height="160"
+                    loading="lazy"
+                    decoding="async"
+                    class="aspect-square w-full max-w-32 rounded-full bg-placeholder object-cover"
+                  />
+                  <div>
+                    <h3 class="font-semibold">{nombre}</h3>
+                    <p class="text-sm text-muted-foreground">{cargo}</p>
+                  </div>
+                </article>
+              </li>
+            ))}
+          </ul>
+        ))
+      }
+    </div>
+  </div>
+</section>

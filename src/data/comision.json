@@ -1,0 +1,10 @@
+{
+  "etapa": "2026",
+  "miembros": [
+    { "cargo": "Coordinador", "nombre": "Nombre Apellido", "foto": "/img/comision/placeholder.svg", "orden": 1, "destacado": true },
+    { "cargo": "Segundo coordinador", "nombre": "Nombre Apellido", "foto": "/img/comision/placeholder.svg", "orden": 2, "destacado": true },
+    { "cargo": "Segundo coordinador", "nombre": "Nombre Apellido", "foto": "/img/comision/placeholder.svg", "orden": 2, "destacado": true },
+    { "cargo": "Secretario", "nombre": "Nombre Apellido", "foto": "/img/comision/placeholder.svg", "orden": 3, "destacado": true },
+    { "cargo": "Secretario", "nombre": "Nombre Apellido", "foto": "/img/comision/placeholder.svg", "orden": 3, "destacado": true }
+  ]
+}

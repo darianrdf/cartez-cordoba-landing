@@ -1,0 +1,82 @@
+---
+import { secciones } from '@/data/navegacion';
+import { sitio } from '@/lib/sitio';
+---
+
+<header class="sticky top-0 z-40 border-b bg-background">
+  <div class="relative mx-auto flex h-(--header-height) max-w-5xl items-center justify-between px-4">
+    <a href="#inicio" class="flex items-center rounded-md" aria-label={`${sitio.nombre}, ir al inicio`}>
+      <!-- Placeholder del logo horizontal -->
+      <span
+        class="flex h-9 w-32 items-center justify-center rounded-md bg-placeholder text-xs font-medium text-placeholder-foreground"
+        aria-hidden="true"
+      >
+        Logo horizontal
+      </span>
+    </a>
+
+    <button
+      type="button"
+      id="menu-boton"
+      class="inline-flex size-11 items-center justify-center rounded-md hover:bg-accent md:hidden"
+      aria-controls="menu-principal"
+      aria-expanded="false"
+      aria-label="Abrir menú"
+    >
+      <svg class="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
+        <path data-icono="abrir" stroke-linecap="round" d="M4 6h16M4 12h16M4 18h16"></path>
+        <path data-icono="cerrar" class="hidden" stroke-linecap="round" d="M6 6l12 12M18 6L6 18"></path>
+      </svg>
+    </button>
+
+    <nav
+      id="menu-principal"
+      aria-label="Principal"
+      class="absolute inset-x-0 top-full hidden border-b bg-background md:static md:block md:border-0"
+    >
+      <ul class="flex flex-col px-4 py-2 md:flex-row md:gap-1 md:p-0">
+        {
+          secciones.map(({ id, etiqueta }) => (
+            <li>
+              <a
+                href={`#${id}`}
+                class="block rounded-md px-3 py-3 text-base font-medium hover:bg-accent md:py-2 md:text-sm"
+              >
+                {etiqueta}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+  </div>
+</header>
+
+<script>
+  const boton = document.getElementById('menu-boton');
+  const menu = document.getElementById('menu-principal');
+
+  if (boton && menu) {
+    const iconoAbrir = boton.querySelector('[data-icono="abrir"]');
+    const iconoCerrar = boton.querySelector('[data-icono="cerrar"]');
+
+    const setAbierto = (abierto: boolean) => {
+      boton.setAttribute('aria-expanded', String(abierto));
+      boton.setAttribute('aria-label', abierto ? 'Cerrar menú' : 'Abrir menú');
+      menu.classList.toggle('hidden', !abierto);
+      iconoAbrir?.classList.toggle('hidden', abierto);
+      iconoCerrar?.classList.toggle('hidden', !abierto);
+    };
+
+    boton.addEventListener('click', () => setAbierto(boton.getAttribute('aria-expanded') !== 'true'));
+    menu.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a')) setAbierto(false);
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && boton.getAttribute('aria-expanded') === 'true') {
+        setAbierto(false);
+        boton.focus();
+      }
+    });
+  }
+</script>

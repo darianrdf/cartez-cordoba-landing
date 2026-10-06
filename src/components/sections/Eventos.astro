@@ -1,0 +1,94 @@
+---
+import { Image } from 'astro:assets';
+import { ETIQUETAS_CATEGORIA, fechaISO, formatearFecha, getProximosEventos } from '@/lib/eventos';
+import { instagramUrl, sitio } from '@/lib/sitio';
+import { cn } from '@/lib/utils';
+
+const eventos = await getProximosEventos();
+---
+
+<section id="eventos" aria-labelledby="eventos-titulo" class="border-b bg-muted">
+  <div class="mx-auto max-w-5xl space-y-8 px-4 py-16">
+    <div class="space-y-2">
+      <h2 id="eventos-titulo" class="text-2xl font-bold md:text-3xl">Próximos eventos</h2>
+      <p class="text-muted-foreground">Agenda del sector agropecuario: actividades propias y eventos a los que vamos.</p>
+    </div>
+
+    {
+      eventos.length === 0 ? (
+        <div class="rounded-lg border border-dashed bg-background p-8 text-center">
+          <p class="font-medium">Por ahora no hay eventos programados.</p>
+          <p class="mt-1 text-muted-foreground">
+            Seguinos en{' '}
+            <a href={instagramUrl()} class="underline underline-offset-4" target="_blank" rel="noopener noreferrer">
+              Instagram (@{sitio.contacto.instagram})
+            </a>{' '}
+            para enterarte de lo próximo.
+          </p>
+        </div>
+      ) : (
+        <ul class="grid gap-4 md:grid-cols-2">
+          {eventos.map(({ data, body }) => {
+            const propio = data.organizador === 'propio';
+            const descripcion = body?.trim();
+            return (
+              <li>
+                <article
+                  class={cn(
+                    'flex h-full flex-col overflow-hidden rounded-lg bg-card text-card-foreground',
+                    propio ? 'border-2 border-primary' : 'border border-dashed',
+                  )}
+                >
+                  {data.flyer && (
+                    <Image
+                      src={data.flyer}
+                      alt={`Flyer de ${data.titulo}`}
+                      widths={[400, 800]}
+                      sizes="(min-width: 768px) 480px, 100vw"
+                      class="aspect-video w-full object-cover"
+                    />
+                  )}
+                  <div class="flex flex-1 flex-col gap-3 p-5">
+                    <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                      <span
+                        class={cn(
+                          'rounded-full px-2.5 py-1',
+                          propio ? 'bg-primary text-primary-foreground' : 'border border-dashed',
+                        )}
+                      >
+                        {propio ? 'Organiza la Comisión' : 'Evento externo'}
+                      </span>
+                      <span class="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
+                        {ETIQUETAS_CATEGORIA[data.categoria]}
+                      </span>
+                    </div>
+                    <h3 class="text-lg font-semibold">{data.titulo}</h3>
+                    <dl class="space-y-1 text-sm text-muted-foreground">
+                      <dt class="sr-only">Fecha</dt>
+                      <dd class="first-letter:uppercase">
+                        <time datetime={fechaISO(data.fecha)}>{formatearFecha(data.fecha)}</time>
+                      </dd>
+                      <dt class="sr-only">Lugar</dt>
+                      <dd>{data.lugar}</dd>
+                    </dl>
+                    {descripcion && <p class="text-sm">{descripcion}</p>}
+                    {data.link && (
+                      <a
+                        href={data.link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        class="mt-auto self-start text-sm font-semibold underline underline-offset-4"
+                      >
+                        Más información<span class="sr-only"> sobre {data.titulo} (abre en otra pestaña)</span>
+                      </a>
+                    )}
+                  </div>
+                </article>
+              </li>
+            );
+          })}
+        </ul>
+      )
+    }
+  </div>
+</section>
