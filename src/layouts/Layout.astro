@@ -1,6 +1,13 @@
 ---
 import '@/styles/global.css';
+import { getImage } from 'astro:assets';
+import logoRedondo from '@/assets/logos/logo-redondo.png';
 import { sitio } from '@/lib/sitio';
+
+// Favicons generados en el build a partir del logo redondo (cuadrados, sin recortar)
+const opcionesIcono = { src: logoRedondo, format: 'png', fit: 'contain', background: 'transparent' } as const;
+const favicon = await getImage({ ...opcionesIcono, width: 48, height: 48 });
+const appleTouchIcon = await getImage({ ...opcionesIcono, width: 180, height: 180, background: '#ffffff' });
 
 interface Props {
   titulo?: string;
@@ -22,7 +29,8 @@ const imagenOG = new URL('/og.png', Astro.site);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="48x48" href={favicon.src} />
+    <link rel="apple-touch-icon" href={appleTouchIcon.src} />
     <link rel="canonical" href={urlCanonica} />
 
     <title>{titulo}</title>

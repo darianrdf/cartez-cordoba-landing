@@ -8,6 +8,7 @@
  */
 :root {
   /* Colores (provisorio: escala de grises) */
+  /* --background tiene que ser claro: los logos (header y hero) son transparentes y pensados para fondo claro */
   --background: #ffffff;
   --foreground: #171717;
   --card: #ffffff;
@@ -34,7 +35,7 @@
   --font-display: var(--font-body);
 
   /* Layout */
-  --header-height: 4rem;
+  --header-height: 4.5rem;
 }
 
 @theme inline {

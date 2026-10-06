@@ -51,6 +51,10 @@ Los cargos son texto libre: se pueden cambiar sin tocar código.
 
 Antes de publicar, cambiar `site` en `astro.config.mjs` por el dominio real y reemplazar `public/og.png` (1200×630) por la imagen para compartir.
 
+## Logos
+
+Están en `src/assets/logos/` (no en `public/`) para que Astro los optimice en el build. Para cambiarlos, reemplazar `logo-horizontal.png` (header) y `logo-redondo.png` (hero y favicon) manteniendo el nombre. Están pensados para fondo claro.
+
 ## Estilos
 
 Colores, radios y fuentes están definidos como variables en `src/styles/global.css`. Para cambiar la paleta se editan solo esas variables.

@@ -1,17 +1,22 @@
 ---
+import { Image } from 'astro:assets';
+import logoRedondo from '@/assets/logos/logo-redondo.png';
 import { sitio } from '@/lib/sitio';
 ---
 
-<section id="inicio" aria-labelledby="hero-titulo" class="border-b">
-  <div class="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 py-16 text-center md:py-24">
-    <!-- Placeholder del logo redondo -->
-    <div
-      role="img"
-      aria-label={`Logo de ${sitio.organizacion}`}
-      class="flex size-32 items-center justify-center rounded-full bg-placeholder text-xs font-medium text-placeholder-foreground md:size-40"
-    >
-      Logo redondo
-    </div>
+<!-- El fondo debe ser claro: el logo es transparente y está pensado para fondos claros -->
+<section id="inicio" aria-labelledby="hero-titulo" class="border-b bg-background">
+  <div class="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 py-12 text-center md:py-20">
+    <Image
+      src={logoRedondo}
+      alt={sitio.logoAlt}
+      width={240}
+      densities={[1, 2]}
+      quality={75}
+      loading="eager"
+      fetchpriority="high"
+      class="h-auto w-48 md:w-60"
+    />
 
     <div class="space-y-3">
       <h1 id="hero-titulo" class="text-3xl font-bold tracking-tight md:text-5xl">

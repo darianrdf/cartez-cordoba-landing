@@ -1,18 +1,22 @@
 ---
+import { Image } from 'astro:assets';
+import logoHorizontal from '@/assets/logos/logo-horizontal.png';
 import { secciones } from '@/data/navegacion';
 import { sitio } from '@/lib/sitio';
 ---
 
+<!-- El fondo debe ser claro: el logo es transparente y está pensado para fondos claros -->
 <header class="sticky top-0 z-40 border-b bg-background">
   <div class="relative mx-auto flex h-(--header-height) max-w-5xl items-center justify-between px-4">
-    <a href="#inicio" class="flex items-center rounded-md" aria-label={`${sitio.nombre}, ir al inicio`}>
-      <!-- Placeholder del logo horizontal -->
-      <span
-        class="flex h-9 w-32 items-center justify-center rounded-md bg-placeholder text-xs font-medium text-placeholder-foreground"
-        aria-hidden="true"
-      >
-        Logo horizontal
-      </span>
+    <a href="#inicio" class="flex items-center rounded-md">
+      <Image
+        src={logoHorizontal}
+        alt={sitio.logoAlt}
+        height={64}
+        densities={[1, 2]}
+        loading="eager"
+        class="h-14 w-auto md:h-16"
+      />
     </a>
 
     <button
