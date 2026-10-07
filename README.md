@@ -14,6 +14,7 @@ npm run preview   # sirve dist/ para revisarlo
 npm run check     # chequeo de tipos
 npm test          # tests (Vitest)
 npm run og        # regenera public/og.png (imagen para compartir el link)
+npm run logo      # regenera src/assets/logos/logo-disco.png (logo en disco blanco)
 ```
 
 > **Temporal:** hoy los eventos, la comisión y los textos y contactos se cargan desde archivos del repositorio. Cuando se integre Supabase, todo este contenido se va a editar desde el dashboard, sin tocar código, y esta forma de editarlos deja de aplicar.
@@ -32,7 +33,8 @@ lugar: Sede de la Comisión, Córdoba
 categoria: charla       # rural | congreso | charla | visita | peña | actividad
 organizador: propio     # propio | externo
 link: https://...       # opcional
-flyer: ./charla.jpg     # opcional, imagen guardada al lado del .md
+imagen: ./charla.jpg    # opcional: foto de la tarjeta (al lado del .md, o URL https)
+flyer: ./flyer.jpg      # opcional
 ---
 
 Descripción corta (opcional).
@@ -87,6 +89,12 @@ Para agregar un miembro, copiar una línea, cambiar los datos y respetar las com
 | `mail` | Mail de contacto |
 | `whatsapp` | Número internacional, solo dígitos (ej. `5492954588587`) |
 | `whatsapp_mensaje` | Mensaje precargado al abrir el chat |
+| `hero_imagen_escritorio` | Foto del hero en pantallas anchas (horizontal) |
+| `hero_imagen_celular` | Foto del hero en celular (vertical) |
+| `franja_imagen` | Foto de la franja entre Conocenos y Eventos |
+| `franja_frase` | Frase corta sobre la franja |
+
+Las imágenes se indican con el nombre de un archivo de `src/assets/fotos/` (ej. `franja-cultivo-girasoles.jpg`) o con una URL `https://`. Hay dos fotos para la franja: `franja-ganado-angus.jpg` y `franja-cultivo-girasoles.jpg`.
 
 Los medios de contacto son opcionales: si `instagram`, `mail` o `whatsapp` quedan vacíos (`""`), su botón no se muestra.
 
@@ -100,10 +108,28 @@ La imagen que aparece al compartir el link es `public/og.png` (1200×630). Se ge
 
 ## Logos
 
-Están en `src/assets/logos/` (no en `public/`) para que Astro los optimice en el build. Para cambiarlos, reemplazar `logo-horizontal.png` (header) y `logo-redondo.png` (hero y favicon) manteniendo el nombre. Están pensados para fondo claro.
+Están en `src/assets/logos/` (no en `public/`) para que Astro los optimice en el build. Están pensados para fondo claro.
+
+- `logo-horizontal.png`: header.
+- `logo-redondo.png`: favicon e imagen para compartir.
+- `logo-disco.png`: el logo dentro de un disco blanco, para el hero y el footer (fondos oscuros). Se genera desde `logo-redondo-original.jpeg` con `npm run logo`; si cambia el logo, reemplazar ese archivo y volver a correrlo.
 
 ## Estilos
 
-Colores, radios y fuentes están definidos como variables en `src/styles/global.css`. Para cambiar la paleta se editan solo esas variables.
+Colores, radios y fuentes están definidos como variables en `src/styles/global.css`; los componentes no usan colores fijos.
+
+| Color | Valor | Uso |
+|---|---|---|
+| Azul marino | `#13216B` | primario, títulos, fondos oscuros (footer: `#0B1440`) |
+| Verde | `#1F9A50` | acentos, íconos, bordes, texto grande |
+| Verde oscuro | `#177A3F` | texto verde normal y botones con texto blanco |
+| Dorado | `#C9A13B` | decorativo, o texto sobre azul marino. **Nunca texto sobre blanco** |
+| Negro | `#111111` | texto de cuerpo |
+
+Los mismos valores están en `src/lib/contraste.ts`: `npm test` verifica que coincidan con `global.css` y que todas las combinaciones de texto cumplan WCAG AA. Si se cambia un color, hay que cambiarlo en los dos lugares.
+
+Tipografías: Fraunces (títulos) e Inter (cuerpo), self-hosted con `@fontsource`.
+
+Fotos: ver `CREDITOS.md`.
 
 Los componentes de shadcn/21st.dev se agregan con `npx shadcn@latest add <componente o URL>` y quedan en `src/components/ui/`.

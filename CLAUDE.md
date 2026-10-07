@@ -29,8 +29,12 @@ Sitio 100% estático, mobile-first (el tráfico llega desde Instagram en celular
 ## Estilos
 
 - Colores, radios y fuentes **solo vía tokens** definidos en `src/styles/global.css` (`bg-background`, `text-muted-foreground`, `rounded-lg`…). Nada de colores literales de Tailwind (`gray-500`, `#hex`) en componentes.
-- La paleta actual es provisoria (grises). Para cambiarla se editan solo las variables de `global.css`.
-- Los logos (`src/assets/logos/`) son PNG transparentes **pensados para fondo claro**: el header y el hero deben tener fondo claro. Se renderizan con `<Image>` de `astro:assets`.
+- Paleta de la marca: navy `#13216B` (footer `navy-deep`), verde `#1F9A50` (acentos, íconos, texto grande), `green-strong` `#177A3F` (texto normal y botones con texto blanco), dorado `#C9A13B` (decorativo o sobre navy, **nunca texto sobre blanco**), ink `#111111` (cuerpo). Derivados: `tint-green`, `tint-gold` (fondos), `navy-muted` / `on-dark-muted` (texto atenuado).
+- Los colores se repiten en `src/lib/contraste.ts`; `contraste.test.ts` verifica que coincidan con `global.css` y que cada combinación de texto cumpla WCAG AA. Toda combinación nueva de texto/fondo se agrega a ese test.
+- Tipografías: Fraunces (títulos, `font-display`) e Inter (cuerpo), self-hosted con @fontsource, solo subset latin y pesos usados.
+- Animaciones sutiles y en CSS (scroll-driven `.aparecer`, transiciones de hover). Siempre respetar `prefers-reduced-motion`.
+- Los logos (`src/assets/logos/`) son PNG transparentes **pensados para fondo claro**. Sobre fotos o fondos oscuros (hero, footer) se usa `logo-disco.png` (logo en disco blanco, `npm run logo`).
+- Imágenes siempre con `astro:assets` (`<Image>`, `getImage()`), lazy salvo el hero. Las imágenes editables (hero, franja, eventos) aceptan archivo local o URL https (`Imagen` en `tipos.ts`, helpers en `src/lib/imagenes.ts`); las remotas deben estar en `image.remotePatterns`.
 
 ## Accesibilidad
 
