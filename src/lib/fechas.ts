@@ -114,7 +114,12 @@ export function estadoEvento(
   return estadoPorInstantes(inicioEvento(fecha).getTime(), vencimientoEvento(fechaFin).getTime(), ahora.getTime());
 }
 
-/** "23 oct" · "10–12 ene" · "30 ene – 2 feb". */
+/** Etiqueta para un evento en curso: "Hoy" si dura un día, "En curso" si dura varios. */
+export function etiquetaEnCurso(fecha: FechaCivil, fechaFin: FechaCivil = fecha): 'Hoy' | 'En curso' {
+  return fecha === fechaFin ? 'Hoy' : 'En curso';
+}
+
+/** "23 oct" · "10–12 ene" · "30 ene – 2 feb" · "30 dic 2026 – 2 ene 2027". */
 export function formatearRango(fecha: FechaCivil, fechaFin: FechaCivil = fecha): string {
   const ini = partes(fecha);
   const fin = partes(fechaFin);
@@ -122,6 +127,7 @@ export function formatearRango(fecha: FechaCivil, fechaFin: FechaCivil = fecha):
   const mesFin = MESES[fin.mes - 1];
 
   if (fecha === fechaFin) return `${ini.dia} ${mesIni}`;
-  if (ini.anio === fin.anio && ini.mes === fin.mes) return `${ini.dia}–${fin.dia} ${mesFin}`;
+  if (ini.anio !== fin.anio) return `${ini.dia} ${mesIni} ${ini.anio} – ${fin.dia} ${mesFin} ${fin.anio}`;
+  if (ini.mes === fin.mes) return `${ini.dia}–${fin.dia} ${mesFin}`;
   return `${ini.dia} ${mesIni} – ${fin.dia} ${mesFin}`;
 }

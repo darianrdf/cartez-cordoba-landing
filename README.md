@@ -52,8 +52,8 @@ organizador: externo
 
 Las fechas van en formato `AAAA-MM-DD`, sin hora. Cómo se muestran:
 
-- Se ordenan por fecha de inicio. Formato: `10 mar` (un día), `10–12 mar` (mismo mes), `30 mar – 2 abr` (distinto mes).
-- Entre el primer y el último día llevan la etiqueta **En curso**.
+- Se ordenan por fecha de inicio. Formato: `10 mar` (un día), `10–12 mar` (mismo mes), `30 mar – 2 abr` (distinto mes), `30 dic 2026 – 2 ene 2027` (distinto año).
+- Un evento de un día lleva la etiqueta **Hoy** ese día. Uno de varios días lleva **En curso** entre el primer y el último día.
 - Un evento deja de mostrarse a las **23:00 (hora de Córdoba) del último día**.
 - Los eventos vencidos no se incluyen al compilar. Además, la página oculta al cargar los que vencieron después del último build, así que no hace falta recompilar para sacarlos. Sí hace falta compilar y publicar para que aparezca un evento nuevo.
 

@@ -2,7 +2,14 @@
 import { Image } from 'astro:assets';
 import { getEventos } from '@/lib/data';
 import { ETIQUETAS_CATEGORIA } from '@/lib/eventos';
-import { estadoEvento, formatearRango, inicioEvento, isoConOffset, vencimientoEvento } from '@/lib/fechas';
+import {
+  estadoEvento,
+  etiquetaEnCurso,
+  formatearRango,
+  inicioEvento,
+  isoConOffset,
+  vencimientoEvento,
+} from '@/lib/fechas';
 import { instagramUrl, sitio } from '@/lib/sitio';
 import { cn } from '@/lib/utils';
 
@@ -71,7 +78,7 @@ const eventos = await getEventos(ahora);
                   <div class="flex flex-1 flex-col gap-3 p-5">
                     <div class="flex flex-wrap gap-2 text-xs font-semibold">
                       <span data-en-curso hidden={!enCurso} class="rounded-full bg-foreground px-2.5 py-1 text-background">
-                        En curso
+                        {etiquetaEnCurso(evento.fecha, evento.fechaFin)}
                       </span>
                       <span
                         class={cn(

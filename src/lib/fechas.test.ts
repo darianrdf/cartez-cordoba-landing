@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   estadoEvento,
+  etiquetaEnCurso,
   formatearRango,
   inicioEvento,
   isoConOffset,
@@ -105,4 +106,25 @@ describe('formatearRango', () => {
   it('un día con fechaFin igual', () => expect(formatearRango('2026-10-23', '2026-10-23')).toBe('23 oct'));
   it('mismo mes', () => expect(formatearRango('2027-01-10', '2027-01-12')).toBe('10–12 ene'));
   it('distinto mes', () => expect(formatearRango('2027-01-30', '2027-02-02')).toBe('30 ene – 2 feb'));
+  it('cruza de año: muestra el año en ambos extremos', () =>
+    expect(formatearRango('2026-12-30', '2027-01-02')).toBe('30 dic 2026 – 2 ene 2027'));
+  it('mismo mes y día en años distintos no se confunde con mismo mes', () =>
+    expect(formatearRango('2026-01-10', '2027-01-12')).toBe('10 ene 2026 – 12 ene 2027'));
+});
+
+describe('etiquetaEnCurso', () => {
+  it('evento de un día → "Hoy"', () => {
+    expect(etiquetaEnCurso('2026-10-23')).toBe('Hoy');
+    expect(etiquetaEnCurso('2026-10-23', '2026-10-23')).toBe('Hoy');
+  });
+
+  it('evento de varios días → "En curso"', () => {
+    expect(etiquetaEnCurso('2026-11-11', '2026-11-13')).toBe('En curso');
+  });
+
+  it('evento que cruza de año en curso el 1 de enero → "En curso"', () => {
+    const evento = { fecha: '2026-12-30', fechaFin: '2027-01-02' };
+    expect(estadoEvento(evento, t('2027-01-01T12:00:00-03:00'))).toBe('en-curso');
+    expect(etiquetaEnCurso(evento.fecha, evento.fechaFin)).toBe('En curso');
+  });
 });
