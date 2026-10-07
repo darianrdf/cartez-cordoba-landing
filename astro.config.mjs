@@ -6,8 +6,8 @@ import react from '@astrojs/react';
 
 // https://astro.build/config
 export default defineConfig({
-  // TODO: reemplazar por el dominio definitivo (se usa para las URLs absolutas de Open Graph)
-  site: 'https://comisioncordoba.example.com',
+  // URL de producción (se usa para la URL canónica y las URLs absolutas de Open Graph)
+  site: 'https://ateneo-cartez-cordoba.pages.dev',
   output: 'static',
   vite: {
     plugins: [tailwindcss()],

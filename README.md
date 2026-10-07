@@ -74,7 +74,7 @@ Para agregar un miembro, copiar una línea, cambiar los datos y respetar las com
 
 `src/data/sitio.json`: nombre, descripción para buscadores y redes, frase del hero, textos de Conocenos, objetivos, mail, usuario de Instagram (sin @), WhatsApp (número internacional sin `+`, ej. `5493511234567`) y el mensaje precargado.
 
-Antes de publicar, cambiar `site` en `astro.config.mjs` por el dominio real y reemplazar `public/og.png` (1200×630) por la imagen para compartir.
+El sitio se publica en https://ateneo-cartez-cordoba.pages.dev (configurado como `site` en `astro.config.mjs`; si cambia el dominio, actualizarlo ahí). Falta reemplazar `public/og.png` (1200×630) por la imagen para compartir.
 
 ## Logos
 
