@@ -1,8 +1,16 @@
 ---
-import { instagramUrl, mailtoUrl, sitio, whatsappUrl } from '@/lib/sitio';
+import { getSitio } from '@/lib/data';
+import { instagramUrl, mailtoUrl, whatsappUrl } from '@/lib/sitio';
 
+const { contacto } = await getSitio();
+
+const enlacePrincipal =
+  'flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 font-semibold text-primary-foreground hover:opacity-90';
 const enlaceSecundario =
   'flex min-h-12 items-center justify-center rounded-lg border bg-background px-6 font-semibold hover:bg-accent';
+
+// Cada medio es opcional: solo se renderizan los que tienen dato cargado.
+const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.instagram);
 ---
 
 <section id="contacto" aria-labelledby="contacto-titulo" class="bg-muted">
@@ -12,28 +20,40 @@ const enlaceSecundario =
       <p class="text-muted-foreground">Escribinos y te contamos cómo participar de la Comisión.</p>
     </div>
 
-    <ul class="flex flex-col gap-3">
-      <li>
-        <a
-          href={whatsappUrl()}
-          target="_blank"
-          rel="noopener noreferrer"
-          class="flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 font-semibold text-primary-foreground hover:opacity-90"
-        >
-          Escribinos por WhatsApp<span class="sr-only"> (abre en otra pestaña)</span>
-        </a>
-      </li>
-      <li>
-        <a href={mailtoUrl()} class={enlaceSecundario}>
-          Mail:&nbsp;<span class="font-normal break-all">{sitio.contacto.mail}</span>
-        </a>
-      </li>
-      <li>
-        <a href={instagramUrl()} target="_blank" rel="noopener noreferrer" class={enlaceSecundario}>
-          Instagram:&nbsp;<span class="font-normal">@{sitio.contacto.instagram}</span>
-          <span class="sr-only"> (abre en otra pestaña)</span>
-        </a>
-      </li>
-    </ul>
+    {
+      hayContacto ? (
+        <ul class="flex flex-col gap-3">
+          {contacto.whatsapp && (
+            <li>
+              <a
+                href={whatsappUrl(contacto.whatsapp, contacto.whatsappMensaje)}
+                target="_blank"
+                rel="noopener noreferrer"
+                class={enlacePrincipal}
+              >
+                Escribinos por WhatsApp<span class="sr-only"> (abre en otra pestaña)</span>
+              </a>
+            </li>
+          )}
+          {contacto.mail && (
+            <li>
+              <a href={mailtoUrl(contacto.mail)} class={enlaceSecundario}>
+                Mail:&nbsp;<span class="font-normal break-all">{contacto.mail}</span>
+              </a>
+            </li>
+          )}
+          {contacto.instagram && (
+            <li>
+              <a href={instagramUrl(contacto.instagram)} target="_blank" rel="noopener noreferrer" class={enlaceSecundario}>
+                Instagram:&nbsp;<span class="font-normal break-all">@{contacto.instagram}</span>
+                <span class="sr-only"> (abre en otra pestaña)</span>
+              </a>
+            </li>
+          )}
+        </ul>
+      ) : (
+        <p class="text-muted-foreground">Muy pronto vas a encontrar acá cómo contactarnos.</p>
+      )
+    }
   </div>
 </section>

@@ -39,3 +39,30 @@ export interface Comision {
   etapa: string;
   miembros: Miembro[];
 }
+
+export interface BloqueTexto {
+  titulo: string;
+  texto: string;
+}
+
+/** Contenido editable del sitio (textos y contactos). */
+export interface Sitio {
+  nombre: string;
+  organizacion: string;
+  descripcionMeta: string;
+  heroFrase: string;
+  /** Cada medio es opcional: si falta, su botón no se muestra. */
+  contacto: {
+    /** Usuario sin @, ej. "cba.ateneocartez". */
+    instagram?: string;
+    mail?: string;
+    /** Número internacional solo con dígitos, ej. "5492954588587". */
+    whatsapp?: string;
+    whatsappMensaje?: string;
+  };
+  conocenos: {
+    ateneo: BloqueTexto;
+    comision: BloqueTexto;
+  };
+  objetivos: string[];
+}

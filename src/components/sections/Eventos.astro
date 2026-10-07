@@ -1,6 +1,5 @@
 ---
 import { Image } from 'astro:assets';
-import { getEventos } from '@/lib/data';
 import { ETIQUETAS_CATEGORIA } from '@/lib/eventos';
 import {
   estadoEvento,
@@ -10,11 +9,13 @@ import {
   isoConOffset,
   vencimientoEvento,
 } from '@/lib/fechas';
-import { instagramUrl, sitio } from '@/lib/sitio';
+import { getEventos, getSitio } from '@/lib/data';
+import { instagramUrl } from '@/lib/sitio';
 import { cn } from '@/lib/utils';
 
 const ahora = new Date();
 const eventos = await getEventos(ahora);
+const { instagram } = (await getSitio()).contacto;
 ---
 
 <section id="eventos" aria-labelledby="eventos-titulo" class="border-b bg-muted">
@@ -27,13 +28,17 @@ const eventos = await getEventos(ahora);
     <!-- Siempre se renderiza: el script lo muestra si todos los eventos vencieron después del build -->
     <div data-eventos-vacio hidden={eventos.length > 0} class="rounded-lg border border-dashed bg-background p-8 text-center">
       <p class="font-medium">Por ahora no hay eventos programados.</p>
-      <p class="mt-1 text-muted-foreground">
-        Seguinos en{' '}
-        <a href={instagramUrl()} class="underline underline-offset-4" target="_blank" rel="noopener noreferrer">
-          Instagram (@{sitio.contacto.instagram})
-        </a>{' '}
-        para enterarte de lo próximo.
-      </p>
+      {
+        instagram && (
+          <p class="mt-1 text-muted-foreground">
+            Seguinos en{' '}
+            <a href={instagramUrl(instagram)} class="underline underline-offset-4" target="_blank" rel="noopener noreferrer">
+              Instagram (@{instagram})
+            </a>{' '}
+            para enterarte de lo próximo.
+          </p>
+        )
+      }
     </div>
 
     {

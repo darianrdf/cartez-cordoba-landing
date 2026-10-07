@@ -1,5 +1,7 @@
 ---
-import { sitio } from '@/lib/sitio';
+import { getSitio } from '@/lib/data';
+
+const sitio = await getSitio();
 
 const bloques = [sitio.conocenos.ateneo, sitio.conocenos.comision];
 ---

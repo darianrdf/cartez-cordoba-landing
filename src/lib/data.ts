@@ -1,13 +1,16 @@
 /**
- * Capa de acceso a datos. ÚNICO lugar que conoce de dónde salen los eventos y la comisión.
- * Hoy: Content Collection de Astro (src/content/eventos) y src/data/comision.json.
- * Cuando la fuente pase a Supabase, solo cambia este archivo.
+ * Capa de acceso a datos. ÚNICO lugar que conoce de dónde salen eventos, comisión y
+ * contenido del sitio.
+ * Hoy: Content Collection de Astro (src/content/eventos), src/data/comision.json y
+ * src/data/sitio.json. Cuando la fuente pase a Supabase, solo cambia este archivo.
  */
 import { getCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import comisionJson from '@/data/comision.json';
+import sitioJson from '@/data/sitio.json';
 import { estadoEvento, normalizarFecha } from '@/lib/fechas';
-import type { Comision, Evento } from '@/lib/tipos';
+import { parsearSitio } from '@/lib/sitio';
+import type { Comision, Evento, Sitio } from '@/lib/tipos';
 
 /**
  * Eventos no vencidos (próximos y en curso) en el instante `ahora`, ordenados por fecha de inicio.
@@ -51,4 +54,9 @@ const comisionSchema = z.object({
 
 export async function getComision(): Promise<Comision> {
   return comisionSchema.parse(comisionJson);
+}
+
+/** Textos y contactos. Con Supabase: la única fila de `configuracion_sitio`. */
+export async function getSitio(): Promise<Sitio> {
+  return parsearSitio(sitioJson);
 }

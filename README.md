@@ -13,9 +13,10 @@ npm run build     # genera el sitio estático en dist/
 npm run preview   # sirve dist/ para revisarlo
 npm run check     # chequeo de tipos
 npm test          # tests (Vitest)
+npm run og        # regenera public/og.png (imagen para compartir el link)
 ```
 
-> **Temporal:** hoy los eventos y la comisión se cargan desde archivos del repositorio. Cuando se integre Supabase se van a administrar desde ahí y esta forma de editarlos deja de aplicar.
+> **Temporal:** hoy los eventos, la comisión y los textos y contactos se cargan desde archivos del repositorio. Cuando se integre Supabase, todo este contenido se va a editar desde el dashboard, sin tocar código, y esta forma de editarlos deja de aplicar.
 
 ## Agregar un evento
 
@@ -72,9 +73,30 @@ Para agregar un miembro, copiar una línea, cambiar los datos y respetar las com
 
 ## Editar textos y contacto
 
-`src/data/sitio.json`: nombre, descripción para buscadores y redes, frase del hero, textos de Conocenos, objetivos, mail, usuario de Instagram (sin @), WhatsApp (número internacional sin `+`, ej. `5493511234567`) y el mensaje precargado.
+`src/data/sitio.json` tiene una estructura plana: cada campo será una columna de la tabla `configuracion_sitio` en Supabase.
 
-El sitio se publica en https://ateneo-cartez-cordoba.pages.dev (configurado como `site` en `astro.config.mjs`; si cambia el dominio, actualizarlo ahí). Falta reemplazar `public/og.png` (1200×630) por la imagen para compartir.
+| Campo | Qué es |
+|---|---|
+| `nombre`, `organizacion` | Nombre que aparece en el hero, el footer y el título de la página |
+| `descripcion_meta` | Descripción para buscadores y para la vista previa al compartir el link |
+| `hero_frase` | Frase de una línea debajo del nombre |
+| `conocenos_ateneo_titulo` / `_texto` | Bloque "¿Qué es el Ateneo CARTEZ?" |
+| `conocenos_comision_titulo` / `_texto` | Bloque "¿Qué es la Comisión Córdoba?" |
+| `objetivos` | Lista de objetivos (uno por línea) |
+| `instagram` | Usuario, sin @ (ej. `cba.ateneocartez`) |
+| `mail` | Mail de contacto |
+| `whatsapp` | Número internacional, solo dígitos (ej. `5492954588587`) |
+| `whatsapp_mensaje` | Mensaje precargado al abrir el chat |
+
+Los medios de contacto son opcionales: si `instagram`, `mail` o `whatsapp` quedan vacíos (`""`), su botón no se muestra.
+
+**WhatsApp:** es el número del coordinador actual. Hay que actualizarlo cada vez que cambia el mandato. En la página no aparece el número, solo el botón "Escribinos por WhatsApp".
+
+## Publicación
+
+El sitio se publica en https://ateneo-cartez-cordoba.pages.dev (configurado como `site` en `astro.config.mjs`; si cambia el dominio, actualizarlo ahí).
+
+La imagen que aparece al compartir el link es `public/og.png` (1200×630). Se genera con `npm run og` a partir del logo redondo, con el script `scripts/generar-og.mjs`. Si cambia el logo, volver a correrlo y commitear el PNG.
 
 ## Logos
 

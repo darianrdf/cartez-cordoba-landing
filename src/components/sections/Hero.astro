@@ -1,7 +1,10 @@
 ---
 import { Image } from 'astro:assets';
 import logoRedondo from '@/assets/logos/logo-redondo.png';
-import { sitio } from '@/lib/sitio';
+import { getSitio } from '@/lib/data';
+import { nombreCompleto } from '@/lib/sitio';
+
+const sitio = await getSitio();
 ---
 
 <!-- El fondo debe ser claro: el logo es transparente y está pensado para fondos claros -->
@@ -9,7 +12,7 @@ import { sitio } from '@/lib/sitio';
   <div class="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 py-12 text-center md:py-20">
     <Image
       src={logoRedondo}
-      alt={sitio.logoAlt}
+      alt={nombreCompleto(sitio)}
       width={240}
       densities={[1, 2]}
       quality={75}

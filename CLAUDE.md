@@ -11,10 +11,12 @@ Sitio 100% estático, mobile-first (el tráfico llega desde Instagram en celular
 
 ## Acceso a datos
 
-- Eventos y comisión se leen **solo** a través de `src/lib/data.ts` (`getEventos()`, `getComision()`). Los componentes nunca importan `astro:content` ni `src/data/comision.json`.
+- Eventos, comisión y contenido del sitio se leen **solo** a través de `src/lib/data.ts` (`getEventos()`, `getComision()`, `getSitio()`). Los componentes nunca importan `astro:content` ni los JSON de `src/data/`.
 - `data.ts` convierte la fuente a los tipos de dominio de `src/lib/tipos.ts`. Esos tipos no deben depender de la fuente.
 - Fuente actual: Content Collection (`src/content/eventos/*.md`, schema en `src/content.config.ts`) y `src/data/comision.json`. **Fuente futura: Supabase.** La migración debe tocar solo `data.ts`. Las fotos y flyers vendrán como URL de Supabase Storage, por eso `foto` y `flyer` aceptan URL externa.
-- Textos fijos y contacto: `src/data/sitio.json` vía `src/lib/sitio.ts`.
+- Textos y contactos: `getSitio()`. Fuente actual `src/data/sitio.json`, plano y en snake_case, que mapea 1:1 a la futura tabla `configuracion_sitio` (una sola fila). `src/lib/sitio.ts` es puro: valida la fila y la convierte al tipo `Sitio` (`parsearSitio`), y arma las URLs de contacto.
+- Los medios de contacto son opcionales. Un componente nunca debe asumir que existen: si falta el dato, no se renderiza el botón o link.
+- Todo contenido editable (textos, contactos, eventos, comisión) pasa por `data.ts`. Nada de texto editable hardcodeado en componentes: en el futuro se edita desde un dashboard.
 
 ## Fechas
 

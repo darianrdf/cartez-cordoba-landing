@@ -1,6 +1,9 @@
 ---
-import { instagramUrl, sitio } from '@/lib/sitio';
+import { getSitio } from '@/lib/data';
+import { instagramUrl } from '@/lib/sitio';
 
+const sitio = await getSitio();
+const { instagram } = sitio.contacto;
 const anio = new Date().getFullYear();
 ---
 
@@ -9,8 +12,12 @@ const anio = new Date().getFullYear();
     class="mx-auto flex max-w-5xl flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground md:flex-row md:justify-between"
   >
     <p>© {anio} {sitio.nombre} · {sitio.organizacion}</p>
-    <a href={instagramUrl()} target="_blank" rel="noopener noreferrer" class="underline underline-offset-4">
-      @{sitio.contacto.instagram}
-    </a>
+    {
+      instagram && (
+        <a href={instagramUrl(instagram)} target="_blank" rel="noopener noreferrer" class="underline underline-offset-4">
+          @{instagram}
+        </a>
+      )
+    }
   </div>
 </footer>

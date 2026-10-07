@@ -2,7 +2,10 @@
 import { Image } from 'astro:assets';
 import logoHorizontal from '@/assets/logos/logo-horizontal.png';
 import { secciones } from '@/data/navegacion';
-import { sitio } from '@/lib/sitio';
+import { getSitio } from '@/lib/data';
+import { nombreCompleto } from '@/lib/sitio';
+
+const sitio = await getSitio();
 ---
 
 <!-- El fondo debe ser claro: el logo es transparente y está pensado para fondos claros -->
@@ -11,7 +14,7 @@ import { sitio } from '@/lib/sitio';
     <a href="#inicio" class="flex items-center rounded-md">
       <Image
         src={logoHorizontal}
-        alt={sitio.logoAlt}
+        alt={nombreCompleto(sitio)}
         height={64}
         densities={[1, 2]}
         loading="eager"

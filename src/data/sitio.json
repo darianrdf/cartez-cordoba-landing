@@ -1,25 +1,16 @@
 {
   "nombre": "Comisión Córdoba",
   "organizacion": "Ateneo CARTEZ",
-  "logoAlt": "Comisión Córdoba – Ateneo CARTEZ",
-  "descripcionMeta": "Comisión Córdoba del Ateneo CARTEZ: jóvenes del sector agropecuario. Conocé nuestros eventos y sumate.",
-  "heroFrase": "Frase de una línea que resume la propuesta de la Comisión.",
-  "contacto": {
-    "mail": "comisioncordoba@example.com",
-    "instagram": "usuario_instagram",
-    "whatsapp": "5493510000000",
-    "whatsappMensaje": "Hola, quiero sumarme a la Comisión Córdoba"
-  },
-  "conocenos": {
-    "ateneo": {
-      "titulo": "¿Qué es el Ateneo CARTEZ?",
-      "texto": "Texto provisorio que explica qué es el Ateneo CARTEZ, su historia y su propósito."
-    },
-    "comision": {
-      "titulo": "¿Qué es la Comisión Córdoba?",
-      "texto": "Texto provisorio que explica qué es la Comisión Córdoba y qué hace en la provincia."
-    }
-  },
+  "descripcion_meta": "Comisión Córdoba del Ateneo CARTEZ: jóvenes del sector agropecuario. Conocé nuestros eventos y sumate.",
+  "hero_frase": "Frase de una línea que resume la propuesta de la Comisión.",
+  "instagram": "cba.ateneocartez",
+  "mail": "comisioncordobaateneocartez@gmail.com",
+  "whatsapp": "5492954588587",
+  "whatsapp_mensaje": "Hola, quiero sumarme a la Comisión Córdoba",
+  "conocenos_ateneo_titulo": "¿Qué es el Ateneo CARTEZ?",
+  "conocenos_ateneo_texto": "Texto provisorio que explica qué es el Ateneo CARTEZ, su historia y su propósito.",
+  "conocenos_comision_titulo": "¿Qué es la Comisión Córdoba?",
+  "conocenos_comision_texto": "Texto provisorio que explica qué es la Comisión Córdoba y qué hace en la provincia.",
   "objetivos": [
     "Objetivo 1: texto provisorio.",
     "Objetivo 2: texto provisorio.",
