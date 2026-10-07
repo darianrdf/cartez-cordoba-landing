@@ -5,13 +5,24 @@
  * (una sola fila, columnas en snake_case). Hoy viene de src/data/sitio.json.
  */
 import { z } from 'astro/zod';
-import type { Sitio } from '@/lib/tipos';
+import type { Imagen, Sitio } from '@/lib/tipos';
 
 /** Texto opcional: vacío, espacios o null cuentan como "no cargado". */
 const opcional = z
   .string()
   .nullish()
   .transform((valor) => valor?.trim() || undefined);
+
+/**
+ * Referencia a una imagen: nombre de archivo de src/assets/fotos/ ("hero.jpg") o URL https
+ * (p. ej. Supabase Storage).
+ */
+const referenciaImagen = z
+  .string()
+  .trim()
+  .refine((ref) => /^https:\/\/\S+$/.test(ref) || /^[\w.-]+\.(jpe?g|png|webp|avif)$/i.test(ref), {
+    message: 'Se espera un nombre de archivo de src/assets/fotos/ o una URL https',
+  });
 
 export const filaSitioSchema = z.object({
   nombre: z.string().min(1),
@@ -27,11 +38,18 @@ export const filaSitioSchema = z.object({
   conocenos_comision_titulo: z.string(),
   conocenos_comision_texto: z.string(),
   objetivos: z.array(z.string()),
+  hero_imagen_escritorio: referenciaImagen,
+  hero_imagen_celular: referenciaImagen,
+  franja_imagen: referenciaImagen,
+  franja_frase: z.string(),
 });
 
 export type FilaSitio = z.input<typeof filaSitioSchema>;
 
-export function parsearSitio(fila: unknown): Sitio {
+/** Convierte una referencia (archivo o URL) en la imagen que usan los componentes. */
+export type ResolverImagen = (referencia: string) => Imagen;
+
+export function parsearSitio(fila: unknown, resolverImagen: ResolverImagen): Sitio {
   const f = filaSitioSchema.parse(fila);
   return {
     nombre: f.nombre,
@@ -49,6 +67,12 @@ export function parsearSitio(fila: unknown): Sitio {
       comision: { titulo: f.conocenos_comision_titulo, texto: f.conocenos_comision_texto },
     },
     objetivos: f.objetivos.map((o) => o.trim()).filter(Boolean),
+    imagenes: {
+      heroEscritorio: resolverImagen(f.hero_imagen_escritorio),
+      heroCelular: resolverImagen(f.hero_imagen_celular),
+      franja: resolverImagen(f.franja_imagen),
+    },
+    franjaFrase: f.franja_frase.trim(),
   };
 }
 

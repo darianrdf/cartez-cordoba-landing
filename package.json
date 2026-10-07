@@ -12,7 +12,8 @@
     "astro": "astro",
     "check": "astro check",
     "test": "vitest run",
-    "og": "node scripts/generar-og.mjs"
+    "og": "node scripts/generar-og.mjs",
+    "logo": "node scripts/generar-logo-disco.mjs"
   },
   "dependencies": {
     "@astrojs/react": "^7.0.1",

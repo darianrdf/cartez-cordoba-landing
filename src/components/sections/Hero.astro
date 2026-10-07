@@ -1,39 +1,84 @@
 ---
 import { Image } from 'astro:assets';
-import logoRedondo from '@/assets/logos/logo-redondo.png';
+import logoDisco from '@/assets/logos/logo-disco.png';
 import { getSitio } from '@/lib/data';
+import { variantes } from '@/lib/imagenes';
 import { nombreCompleto } from '@/lib/sitio';
 
 const sitio = await getSitio();
+const { heroEscritorio, heroCelular } = sitio.imagenes;
+
+// Art direction: foto horizontal desde md, vertical en celular. AVIF con respaldo WebP.
+const ANCHOS_ESCRITORIO = [1024, 1440, 1920, 2400];
+const ANCHOS_CELULAR = [480, 750, 1080];
+const [escritorioAvif, escritorioWebp, celularAvif, celularWebp] = await Promise.all([
+  variantes(heroEscritorio, ANCHOS_ESCRITORIO, 'avif', 60),
+  variantes(heroEscritorio, ANCHOS_ESCRITORIO, 'webp', 70),
+  variantes(heroCelular, ANCHOS_CELULAR, 'avif', 60),
+  variantes(heroCelular, ANCHOS_CELULAR, 'webp', 70),
+]);
+const DESDE_MD = '(min-width: 768px)';
 ---
 
-<!-- El fondo debe ser claro: el logo es transparente y está pensado para fondos claros -->
-<section id="inicio" aria-labelledby="hero-titulo" class="border-b bg-background">
-  <div class="mx-auto flex max-w-5xl flex-col items-center gap-6 px-4 py-12 text-center md:py-20">
-    <Image
-      src={logoRedondo}
-      alt={nombreCompleto(sitio)}
-      width={240}
-      densities={[1, 2]}
-      quality={75}
+<section
+  id="inicio"
+  aria-labelledby="hero-titulo"
+  class="relative isolate flex min-h-[calc(100svh-var(--header-height))] overflow-hidden bg-navy"
+>
+  <!-- Foto de fondo (decorativa) -->
+  <picture>
+    <source media={DESDE_MD} type="image/avif" srcset={escritorioAvif.srcset} sizes="100vw" />
+    <source media={DESDE_MD} type="image/webp" srcset={escritorioWebp.srcset} sizes="100vw" />
+    <source type="image/avif" srcset={celularAvif.srcset} sizes="100vw" />
+    <img
+      src={celularWebp.src}
+      srcset={celularWebp.srcset}
+      sizes="100vw"
+      width={celularWebp.width}
+      height={celularWebp.height}
+      alt=""
       loading="eager"
       fetchpriority="high"
-      class="h-auto w-48 md:w-60"
+      decoding="async"
+      class="absolute inset-0 -z-20 h-full w-full object-cover"
+    />
+  </picture>
+
+  <!-- Degradé azul marino de abajo hacia arriba para la legibilidad del texto -->
+  <div
+    aria-hidden="true"
+    class="absolute inset-0 -z-10 bg-linear-to-t from-navy from-15% via-navy/75 via-50% to-navy/0 to-85% md:via-navy/65 md:via-45% md:to-75%"
+  >
+  </div>
+
+  <div class="mx-auto flex w-full max-w-6xl flex-col items-center justify-between gap-10 px-4 pt-8 pb-14 text-center md:pt-12 md:pb-20">
+    <!-- Logo en disco blanco, sobre el cielo de la foto -->
+    <Image
+      src={logoDisco}
+      alt={nombreCompleto(sitio)}
+      width={176}
+      densities={[1, 2]}
+      loading="eager"
+      class="size-28 rounded-full shadow-xl ring-4 ring-white/40 md:size-44"
     />
 
-    <div class="space-y-3">
-      <h1 id="hero-titulo" class="text-3xl font-bold tracking-tight md:text-5xl">
-        {sitio.nombre}
-        <span class="block text-lg font-medium text-muted-foreground md:text-2xl">{sitio.organizacion}</span>
+    <div class="flex flex-col items-center gap-5">
+      <h1 id="hero-titulo" class="flex flex-col items-center gap-3">
+        <span class="text-sm font-semibold tracking-[0.3em] text-gold uppercase md:text-base">
+          {sitio.organizacion}
+        </span>
+        <span class="font-display text-4xl leading-tight font-semibold text-white md:text-6xl">
+          {sitio.nombre}
+        </span>
       </h1>
-      <p class="mx-auto max-w-xl text-lg text-muted-foreground">{sitio.heroFrase}</p>
+      <span aria-hidden="true" class="h-1 w-16 rounded-full bg-gold"></span>
+      <p class="max-w-xl text-lg text-white md:text-xl">{sitio.heroFrase}</p>
+      <a
+        href="#contacto"
+        class="mt-2 inline-flex min-h-12 items-center justify-center rounded-full bg-green-strong px-10 text-base font-semibold text-white shadow-lg transition-colors hover:bg-white hover:text-green-strong motion-reduce:transition-none"
+      >
+        Sumate
+      </a>
     </div>
-
-    <a
-      href="#contacto"
-      class="inline-flex min-h-12 items-center justify-center rounded-lg bg-primary px-8 text-base font-semibold text-primary-foreground hover:opacity-90"
-    >
-      Sumate
-    </a>
   </div>
 </section>

@@ -1,3 +1,4 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import sitioJson from '../data/sitio.json';
 import { instagramUrl, mailtoUrl, nombreCompleto, parsearSitio, whatsappUrl, type FilaSitio } from './sitio';
@@ -16,15 +17,22 @@ const filaBase: FilaSitio = {
   conocenos_comision_titulo: 'C',
   conocenos_comision_texto: 'c',
   objetivos: ['Uno', 'Dos'],
+  hero_imagen_escritorio: 'hero.jpg',
+  hero_imagen_celular: 'https://xyz.supabase.co/storage/v1/object/public/fotos/hero.webp',
+  franja_imagen: 'franja.jpg',
+  franja_frase: '  Frase de la franja  ',
 };
+
+/** Resolver de prueba: devuelve la referencia tal cual. */
+const parsear = (fila: unknown) => parsearSitio(fila, (ref) => ref);
 
 describe('parsearSitio', () => {
   it('el sitio.json del repo es válido', () => {
-    expect(() => parsearSitio(sitioJson)).not.toThrow();
+    expect(() => parsear(sitioJson)).not.toThrow();
   });
 
   it('convierte la fila plana al tipo de dominio', () => {
-    const sitio = parsearSitio(filaBase);
+    const sitio = parsear(filaBase);
     expect(sitio.contacto).toEqual({
       instagram: 'cba.ateneocartez',
       mail: 'comisioncordobaateneocartez@gmail.com',
@@ -36,7 +44,7 @@ describe('parsearSitio', () => {
   });
 
   it('los medios de contacto vacíos, en blanco o null quedan sin cargar', () => {
-    const sitio = parsearSitio({ ...filaBase, instagram: '', mail: '   ', whatsapp: null });
+    const sitio = parsear({ ...filaBase, instagram: '', mail: '   ', whatsapp: null });
     expect(sitio.contacto.instagram).toBeUndefined();
     expect(sitio.contacto.mail).toBeUndefined();
     expect(sitio.contacto.whatsapp).toBeUndefined();
@@ -44,25 +52,51 @@ describe('parsearSitio', () => {
 
   it('los medios de contacto pueden faltar por completo', () => {
     const { instagram, mail, whatsapp, whatsapp_mensaje, ...sinContacto } = filaBase;
-    expect(parsearSitio(sinContacto).contacto).toEqual({});
+    expect(parsear(sinContacto).contacto).toEqual({});
   });
 
   it('normaliza el usuario de Instagram y el número de WhatsApp', () => {
-    const sitio = parsearSitio({ ...filaBase, instagram: '@cba.ateneocartez', whatsapp: '+54 9 2954 58-8587' });
+    const sitio = parsear({ ...filaBase, instagram: '@cba.ateneocartez', whatsapp: '+54 9 2954 58-8587' });
     expect(sitio.contacto.instagram).toBe('cba.ateneocartez');
     expect(sitio.contacto.whatsapp).toBe('5492954588587');
   });
 
   it('un WhatsApp sin dígitos cuenta como no cargado', () => {
-    expect(parsearSitio({ ...filaBase, whatsapp: '-' }).contacto.whatsapp).toBeUndefined();
+    expect(parsear({ ...filaBase, whatsapp: '-' }).contacto.whatsapp).toBeUndefined();
   });
 
   it('descarta objetivos vacíos', () => {
-    expect(parsearSitio({ ...filaBase, objetivos: ['Uno', ' ', ''] }).objetivos).toEqual(['Uno']);
+    expect(parsear({ ...filaBase, objetivos: ['Uno', ' ', ''] }).objetivos).toEqual(['Uno']);
   });
 
   it('rechaza una fila sin nombre', () => {
-    expect(() => parsearSitio({ ...filaBase, nombre: '' })).toThrow();
+    expect(() => parsear({ ...filaBase, nombre: '' })).toThrow();
+  });
+});
+
+describe('imágenes del sitio', () => {
+  it('acepta nombres de archivo y URLs https, y las pasa por el resolver', () => {
+    const sitio = parsearSitio(filaBase, (ref) => `resuelta:${ref}`);
+    expect(sitio.imagenes).toEqual({
+      heroEscritorio: 'resuelta:hero.jpg',
+      heroCelular: 'resuelta:https://xyz.supabase.co/storage/v1/object/public/fotos/hero.webp',
+      franja: 'resuelta:franja.jpg',
+    });
+    expect(sitio.franjaFrase).toBe('Frase de la franja');
+  });
+
+  it.each(['http://inseguro.com/a.jpg', '../fuera.jpg', 'carpeta/foto.jpg', 'foto.gif', ''])(
+    'rechaza la referencia %j',
+    (ref) => {
+      expect(() => parsear({ ...filaBase, franja_imagen: ref })).toThrow();
+    },
+  );
+
+  it('las fotos locales que referencia sitio.json existen', () => {
+    const refs = [sitioJson.hero_imagen_escritorio, sitioJson.hero_imagen_celular, sitioJson.franja_imagen];
+    for (const ref of refs.filter((r) => !r.startsWith('https://'))) {
+      expect(existsSync(new URL(`../assets/fotos/${ref}`, import.meta.url)), ref).toBe(true);
+    }
   });
 });
 

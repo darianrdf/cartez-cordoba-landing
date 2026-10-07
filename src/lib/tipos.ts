@@ -10,6 +10,9 @@ export const ORGANIZADORES = ['propio', 'externo'] as const;
 export type Categoria = (typeof CATEGORIAS)[number];
 export type Organizador = (typeof ORGANIZADORES)[number];
 
+/** Imagen local (ImageMetadata, optimizada por Astro) o URL externa (p. ej. Supabase Storage). */
+export type Imagen = ImageMetadata | string;
+
 export interface Evento {
   id: string;
   titulo: string;
@@ -21,8 +24,9 @@ export interface Evento {
   categoria: Categoria;
   organizador: Organizador;
   link?: string;
-  /** Imagen local (optimizada por Astro) o URL externa. */
-  flyer?: ImageMetadata | string;
+  /** Imagen de la tarjeta. Si falta, se usa el flyer y, si tampoco hay, la foto por defecto de la categoría. */
+  imagen?: Imagen;
+  flyer?: Imagen;
   descripcion?: string;
 }
 
@@ -65,4 +69,10 @@ export interface Sitio {
     comision: BloqueTexto;
   };
   objetivos: string[];
+  imagenes: {
+    heroEscritorio: Imagen;
+    heroCelular: Imagen;
+    franja: Imagen;
+  };
+  franjaFrase: string;
 }

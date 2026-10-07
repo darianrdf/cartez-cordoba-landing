@@ -10,7 +10,25 @@ import comisionJson from '@/data/comision.json';
 import sitioJson from '@/data/sitio.json';
 import { estadoEvento, normalizarFecha } from '@/lib/fechas';
 import { parsearSitio } from '@/lib/sitio';
-import type { Comision, Evento, Sitio } from '@/lib/tipos';
+import type { Comision, Evento, Imagen, Sitio } from '@/lib/tipos';
+
+/** Fotos locales disponibles para referenciar por nombre de archivo (hero, franja, etc.). */
+const fotosLocales = Object.fromEntries(
+  Object.entries(
+    import.meta.glob<{ default: ImageMetadata }>('/src/assets/fotos/*.{jpg,jpeg,png,webp,avif}', { eager: true }),
+  ).map(([ruta, modulo]) => [ruta.split('/').pop()!, modulo.default]),
+);
+
+/**
+ * Resuelve una referencia de imagen: las URL quedan como string (imagen remota) y los nombres
+ * de archivo se buscan en src/assets/fotos/. Con Supabase, las imágenes serán URLs de Storage.
+ */
+function resolverImagen(referencia: string): Imagen {
+  if (/^https:\/\//.test(referencia)) return referencia;
+  const foto = fotosLocales[referencia];
+  if (!foto) throw new Error(`No existe la imagen "${referencia}" en src/assets/fotos/`);
+  return foto;
+}
 
 /**
  * Eventos no vencidos (próximos y en curso) en el instante `ahora`, ordenados por fecha de inicio.
@@ -58,5 +76,5 @@ export async function getComision(): Promise<Comision> {
 
 /** Textos y contactos. Con Supabase: la única fila de `configuracion_sitio`. */
 export async function getSitio(): Promise<Sitio> {
-  return parsearSitio(sitioJson);
+  return parsearSitio(sitioJson, resolverImagen);
 }
