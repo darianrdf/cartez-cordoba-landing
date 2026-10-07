@@ -1,0 +1,27 @@
+---
+import { Image } from 'astro:assets';
+import { getSitio } from '@/lib/data';
+import { propsImagen } from '@/lib/imagenes';
+
+const sitio = await getSitio();
+---
+
+<!-- Separador visual: foto angosta de campo con una frase corta -->
+<div class="relative isolate flex h-56 items-center justify-center overflow-hidden bg-navy md:h-80">
+  <Image
+    {...propsImagen(sitio.imagenes.franja)}
+    alt=""
+    widths={[640, 1024, 1600, 2400]}
+    sizes="100vw"
+    quality={70}
+    class="absolute inset-0 -z-20 h-full w-full object-cover"
+  />
+  <div aria-hidden="true" class="absolute inset-0 -z-10 bg-navy/60"></div>
+  {
+    sitio.franjaFrase && (
+      <p class="aparecer max-w-3xl px-6 text-center font-display text-2xl leading-snug font-semibold text-balance text-white md:text-4xl">
+        {sitio.franjaFrase}
+      </p>
+    )
+  }
+</div>
