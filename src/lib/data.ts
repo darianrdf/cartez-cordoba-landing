@@ -47,6 +47,7 @@ export async function getEventos(ahora: Date = new Date()): Promise<Evento[]> {
       categoria: data.categoria,
       organizador: data.organizador,
       link: data.link,
+      imagen: data.imagen,
       flyer: data.flyer,
       descripcion: body?.trim() || undefined,
     }))

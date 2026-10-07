@@ -1,6 +1,10 @@
 ---
 import { Image } from 'astro:assets';
-import { ETIQUETAS_CATEGORIA } from '@/lib/eventos';
+import ArrowRight from '@lucide/astro/icons/arrow-right';
+import CalendarDays from '@lucide/astro/icons/calendar-days';
+import MapPin from '@lucide/astro/icons/map-pin';
+import { getEventos, getSitio } from '@/lib/data';
+import { ETIQUETAS_CATEGORIA, imagenDeEvento } from '@/lib/eventos';
 import {
   estadoEvento,
   etiquetaEnCurso,
@@ -9,7 +13,8 @@ import {
   isoConOffset,
   vencimientoEvento,
 } from '@/lib/fechas';
-import { getEventos, getSitio } from '@/lib/data';
+import { FOTOS_POR_CATEGORIA } from '@/lib/fotos';
+import { propsImagen } from '@/lib/imagenes';
 import { instagramUrl } from '@/lib/sitio';
 import { cn } from '@/lib/utils';
 
@@ -18,21 +23,32 @@ const eventos = await getEventos(ahora);
 const { instagram } = (await getSitio()).contacto;
 ---
 
-<section id="eventos" aria-labelledby="eventos-titulo" class="border-b bg-muted">
-  <div class="mx-auto max-w-5xl space-y-8 px-4 py-16">
-    <div class="space-y-2">
-      <h2 id="eventos-titulo" class="text-2xl font-bold md:text-3xl">Próximos eventos</h2>
-      <p class="text-muted-foreground">Agenda del sector agropecuario: actividades propias y eventos a los que vamos.</p>
+<section id="eventos" aria-labelledby="eventos-titulo" class="bg-tint-green">
+  <div class="mx-auto max-w-6xl space-y-10 px-4 py-20 md:py-28">
+    <div class="space-y-3">
+      <h2 id="eventos-titulo" class="titulo-seccion">Próximos eventos</h2>
+      <p class="max-w-2xl text-lg text-navy-muted">
+        Agenda del sector agropecuario: actividades propias y eventos a los que vamos.
+      </p>
     </div>
 
     <!-- Siempre se renderiza: el script lo muestra si todos los eventos vencieron después del build -->
-    <div data-eventos-vacio hidden={eventos.length > 0} class="rounded-lg border border-dashed bg-background p-8 text-center">
-      <p class="font-medium">Por ahora no hay eventos programados.</p>
+    <div
+      data-eventos-vacio
+      hidden={eventos.length > 0}
+      class="rounded-xl border-2 border-dashed border-green bg-white p-10 text-center"
+    >
+      <p class="font-display text-xl font-semibold text-navy">Por ahora no hay eventos programados.</p>
       {
         instagram && (
-          <p class="mt-1 text-muted-foreground">
+          <p class="mt-2 text-ink">
             Seguinos en{' '}
-            <a href={instagramUrl(instagram)} class="underline underline-offset-4" target="_blank" rel="noopener noreferrer">
+            <a
+              href={instagramUrl(instagram)}
+              class="font-semibold text-green-strong underline underline-offset-4"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
               Instagram (@{instagram})
             </a>{' '}
             para enterarte de lo próximo.
@@ -43,82 +59,92 @@ const { instagram } = (await getSitio()).contacto;
 
     {
       eventos.length > 0 && (
-        <ul data-eventos-lista class="grid gap-4 md:grid-cols-2">
+        <ul data-eventos-lista class="grilla-eventos grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {eventos.map((evento) => {
             const propio = evento.organizador === 'propio';
             const enCurso = estadoEvento(evento, ahora) === 'en-curso';
+            const Contenedor = evento.link ? 'a' : 'article';
+            const propsContenedor = evento.link
+              ? { href: evento.link, target: '_blank', rel: 'noopener noreferrer' }
+              : {};
             return (
               <li
                 data-evento
                 data-inicio={isoConOffset(inicioEvento(evento.fecha))}
                 data-vence={isoConOffset(vencimientoEvento(evento.fechaFin))}
+                class="tarjeta-evento"
               >
-                <article
+                <Contenedor
+                  {...propsContenedor}
                   class={cn(
-                    'flex h-full flex-col overflow-hidden rounded-lg bg-card text-card-foreground',
-                    propio ? 'border-2 border-primary' : 'border border-dashed',
+                    'aparecer relative isolate flex h-80 flex-col justify-end overflow-hidden rounded-xl bg-navy text-white shadow-lg',
+                    propio && 'ring-2 ring-gold',
                   )}
                 >
-                  {typeof evento.flyer === 'string' ? (
-                    <img
-                      src={evento.flyer}
-                      alt={`Flyer de ${evento.titulo}`}
-                      width="800"
-                      height="450"
-                      loading="lazy"
-                      decoding="async"
-                      class="aspect-video w-full object-cover"
-                    />
-                  ) : (
-                    evento.flyer && (
-                      <Image
-                        src={evento.flyer}
-                        alt={`Flyer de ${evento.titulo}`}
-                        widths={[400, 800]}
-                        sizes="(min-width: 768px) 480px, 100vw"
-                        class="aspect-video w-full object-cover"
-                      />
-                    )
-                  )}
-                  <div class="flex flex-1 flex-col gap-3 p-5">
-                    <div class="flex flex-wrap gap-2 text-xs font-semibold">
-                      <span data-en-curso hidden={!enCurso} class="rounded-full bg-foreground px-2.5 py-1 text-background">
-                        {etiquetaEnCurso(evento.fecha, evento.fechaFin)}
-                      </span>
-                      <span
-                        class={cn(
-                          'rounded-full px-2.5 py-1',
-                          propio ? 'bg-primary text-primary-foreground' : 'border border-dashed',
-                        )}
-                      >
-                        {propio ? 'Organiza la Comisión' : 'Evento externo'}
-                      </span>
-                      <span class="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
-                        {ETIQUETAS_CATEGORIA[evento.categoria]}
-                      </span>
-                    </div>
-                    <h3 class="text-lg font-semibold">{evento.titulo}</h3>
-                    <dl class="space-y-1 text-sm text-muted-foreground">
-                      <dt class="sr-only">Fecha</dt>
-                      <dd>
-                        <time datetime={evento.fecha}>{formatearRango(evento.fecha, evento.fechaFin)}</time>
-                      </dd>
-                      <dt class="sr-only">Lugar</dt>
-                      <dd>{evento.lugar}</dd>
+                  <Image
+                    {...propsImagen(imagenDeEvento(evento, FOTOS_POR_CATEGORIA))}
+                    alt=""
+                    widths={[400, 640, 800, 1200]}
+                    sizes="(min-width: 1024px) 370px, (min-width: 640px) 50vw, 100vw"
+                    quality={70}
+                    class="absolute inset-0 -z-20 h-full w-full object-cover"
+                  />
+                  <div
+                    aria-hidden="true"
+                    class="absolute inset-0 -z-10 bg-linear-to-t from-black/80 via-black/40 to-transparent"
+                  />
+
+                  <div class="absolute inset-x-4 top-4 flex items-start justify-between gap-2 text-xs font-semibold">
+                    <span
+                      class={cn(
+                        'rounded-full px-3 py-1',
+                        propio ? 'bg-gold text-navy' : 'bg-navy/85 text-white ring-1 ring-white/60',
+                      )}
+                    >
+                      {propio ? 'Organiza la Comisión' : 'Evento externo'}
+                    </span>
+                    <span
+                      data-en-curso
+                      hidden={!enCurso}
+                      class="rounded-full bg-green-strong px-3 py-1 text-white shadow"
+                    >
+                      {etiquetaEnCurso(evento.fecha, evento.fechaFin)}
+                    </span>
+                  </div>
+
+                  <div class="space-y-2 p-5">
+                    <p class="text-xs font-semibold tracking-widest text-gold uppercase">
+                      {ETIQUETAS_CATEGORIA[evento.categoria]}
+                    </p>
+                    <h3 class="line-clamp-2 font-display text-xl leading-snug font-semibold">{evento.titulo}</h3>
+                    <dl class="space-y-1 text-sm text-white">
+                      <div class="flex items-center gap-2">
+                        <dt>
+                          <CalendarDays size={16} aria-hidden="true" />
+                          <span class="sr-only">Fecha</span>
+                        </dt>
+                        <dd>
+                          <time datetime={evento.fecha}>{formatearRango(evento.fecha, evento.fechaFin)}</time>
+                        </dd>
+                      </div>
+                      <div class="flex items-center gap-2">
+                        <dt>
+                          <MapPin size={16} aria-hidden="true" />
+                          <span class="sr-only">Lugar</span>
+                        </dt>
+                        <dd class="truncate">{evento.lugar}</dd>
+                      </div>
                     </dl>
-                    {evento.descripcion && <p class="text-sm">{evento.descripcion}</p>}
+                    {evento.descripcion && <p class="line-clamp-2 text-sm text-white/90">{evento.descripcion}</p>}
                     {evento.link && (
-                      <a
-                        href={evento.link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        class="mt-auto self-start text-sm font-semibold underline underline-offset-4"
-                      >
-                        Más información<span class="sr-only"> sobre {evento.titulo} (abre en otra pestaña)</span>
-                      </a>
+                      <span class="inline-flex items-center gap-1 pt-1 text-sm font-semibold text-gold">
+                        Más información
+                        <ArrowRight size={16} aria-hidden="true" />
+                        <span class="sr-only">(abre en otra pestaña)</span>
+                      </span>
                     )}
                   </div>
-                </article>
+                </Contenedor>
               </li>
             );
           })}
@@ -130,7 +156,7 @@ const { instagram } = (await getSitio()).contacto;
 
 <script>
   // Segundo filtro: el sitio es estático, así que al cargar se ocultan los eventos que
-  // vencieron después del último build y se actualiza la etiqueta "En curso".
+  // vencieron después del último build y se actualiza la etiqueta "Hoy"/"En curso".
   import { estadoPorInstantes } from '@/lib/fechas';
 
   const ahora = Date.now();

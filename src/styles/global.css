@@ -140,6 +140,48 @@
   .titulo-seccion.centrado::before {
     @apply mx-auto;
   }
+
+  /*
+   * Grilla de eventos (inspirada en "Hover Reveal Cards" de 21st.dev): al pasar el mouse o
+   * enfocar una tarjeta, las demás bajan opacidad y escala y la activa crece. Sin blur.
+   * El hover solo aplica con mouse; en celular todas se ven completas.
+   */
+  .grilla-eventos .tarjeta-evento {
+    transition:
+      opacity 300ms ease,
+      transform 300ms ease;
+  }
+  /* Teclado: el foco visible se comporta igual que el hover (:has no se puede anidar) */
+  .grilla-eventos:has(.tarjeta-evento :focus-visible) .tarjeta-evento:not(:has(:focus-visible)) {
+    opacity: 0.6;
+    transform: scale(0.97);
+  }
+  .grilla-eventos .tarjeta-evento:has(:focus-visible) {
+    position: relative;
+    z-index: 1;
+    transform: scale(1.05);
+  }
+  @media (hover: hover) and (pointer: fine) {
+    .grilla-eventos:has(.tarjeta-evento:hover) .tarjeta-evento:not(:hover) {
+      opacity: 0.6;
+      transform: scale(0.97);
+    }
+    .grilla-eventos .tarjeta-evento:hover {
+      position: relative;
+      z-index: 1;
+      transform: scale(1.05);
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .grilla-eventos .tarjeta-evento,
+    .grilla-eventos .tarjeta-evento:hover,
+    .grilla-eventos .tarjeta-evento:has(:focus-visible),
+    .grilla-eventos:has(.tarjeta-evento:hover) .tarjeta-evento,
+    .grilla-eventos:has(.tarjeta-evento :focus-visible) .tarjeta-evento {
+      transform: none !important;
+      transition: opacity 150ms ease;
+    }
+  }
 }
 
 /*
