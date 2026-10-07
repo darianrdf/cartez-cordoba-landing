@@ -12,7 +12,7 @@
     "astro": "astro",
     "check": "astro check",
     "test": "vitest run",
-    "og": "node scripts/generar-og.mjs",
+    "og": "npm run logo && node scripts/generar-og.mjs",
     "logo": "node scripts/generar-logo-disco.mjs"
   },
   "dependencies": {
@@ -36,6 +36,7 @@
   "devDependencies": {
     "@astrojs/check": "^0.9.10",
     "@types/node": "^24.19.1",
+    "opentype.js": "^2.0.0",
     "sharp": "^0.35.5",
     "typescript": "^6.0.3",
     "vitest": "^5.0.3"

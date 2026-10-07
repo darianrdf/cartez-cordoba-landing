@@ -104,7 +104,7 @@ Los medios de contacto son opcionales: si `instagram`, `mail` o `whatsapp` queda
 
 El sitio se publica en https://ateneo-cartez-cordoba.pages.dev (configurado como `site` en `astro.config.mjs`; si cambia el dominio, actualizarlo ahí).
 
-La imagen que aparece al compartir el link es `public/og.png` (1200×630). Se genera con `npm run og` a partir del logo redondo, con el script `scripts/generar-og.mjs`. Si cambia el logo, volver a correrlo y commitear el PNG.
+La imagen que aparece al compartir el link es `public/og.png` (1200×630, menos de 300 KB para que WhatsApp muestre la vista previa). Se genera con `npm run og` (`scripts/generar-og.mjs`): la foto del hero de escritorio con velo navy, el logo en disco y el nombre en Fraunces y dorado. El texto se convierte en trazos a partir de las fuentes de @fontsource, así que sale igual en cualquier máquina. Si cambia el logo o la foto, volver a correrlo y commitear el PNG.
 
 ## Logos
 
