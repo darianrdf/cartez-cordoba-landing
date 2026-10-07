@@ -1,58 +1,68 @@
 ---
+import Mail from '@lucide/astro/icons/mail';
+import MessageCircle from '@lucide/astro/icons/message-circle';
+import Instagram from '@/components/iconos/Instagram.astro';
 import { getSitio } from '@/lib/data';
 import { instagramUrl, mailtoUrl, whatsappUrl } from '@/lib/sitio';
 
 const { contacto } = await getSitio();
 
-const enlacePrincipal =
-  'flex min-h-12 items-center justify-center rounded-lg bg-primary px-6 font-semibold text-primary-foreground hover:opacity-90';
-const enlaceSecundario =
-  'flex min-h-12 items-center justify-center rounded-lg border bg-background px-6 font-semibold hover:bg-accent';
-
-// Cada medio es opcional: solo se renderizan los que tienen dato cargado.
+// Botones dorados con texto navy (5,9:1). Cada medio es opcional: solo se renderizan los que tienen dato.
+const claseBoton =
+  'flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-gold px-6 font-semibold text-navy shadow-lg ' +
+  'transition-colors duration-200 hover:bg-white motion-reduce:transition-none';
 const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.instagram);
 ---
 
-<section id="contacto" aria-labelledby="contacto-titulo" class="bg-muted">
-  <div class="mx-auto max-w-xl space-y-8 px-4 py-16 text-center">
-    <div class="space-y-2">
-      <h2 id="contacto-titulo" class="text-2xl font-bold md:text-3xl">Sumate</h2>
-      <p class="text-muted-foreground">Escribinos y te contamos cómo participar de la Comisión.</p>
+<section id="contacto" aria-labelledby="contacto-titulo" class="bg-navy text-white">
+  <div class="mx-auto max-w-3xl space-y-10 px-4 py-20 text-center md:py-28">
+    <div class="space-y-4">
+      <h2 id="contacto-titulo" class="titulo-seccion centrado text-white">Sumate</h2>
+      <p class="text-lg text-on-dark-muted">Escribinos y te contamos cómo participar de la Comisión.</p>
     </div>
 
     {
       hayContacto ? (
-        <ul class="flex flex-col gap-3">
+        <ul class="mx-auto flex max-w-md flex-col gap-4">
           {contacto.whatsapp && (
-            <li>
+            <li class="aparecer">
               <a
                 href={whatsappUrl(contacto.whatsapp, contacto.whatsappMensaje)}
                 target="_blank"
                 rel="noopener noreferrer"
-                class={enlacePrincipal}
+                class={claseBoton}
               >
-                Escribinos por WhatsApp<span class="sr-only"> (abre en otra pestaña)</span>
-              </a>
-            </li>
-          )}
-          {contacto.mail && (
-            <li>
-              <a href={mailtoUrl(contacto.mail)} class={enlaceSecundario}>
-                Mail:&nbsp;<span class="font-normal break-all">{contacto.mail}</span>
+                <MessageCircle size={22} aria-hidden="true" />
+                Escribinos por WhatsApp
+                <span class="sr-only">(abre en otra pestaña)</span>
               </a>
             </li>
           )}
           {contacto.instagram && (
-            <li>
-              <a href={instagramUrl(contacto.instagram)} target="_blank" rel="noopener noreferrer" class={enlaceSecundario}>
-                Instagram:&nbsp;<span class="font-normal break-all">@{contacto.instagram}</span>
-                <span class="sr-only"> (abre en otra pestaña)</span>
+            <li class="aparecer">
+              <a href={instagramUrl(contacto.instagram)} target="_blank" rel="noopener noreferrer" class={claseBoton}>
+                <Instagram size={22} />
+                <span>
+                  <span class="sr-only">Instagram: </span>@{contacto.instagram}
+                </span>
+                <span class="sr-only">(abre en otra pestaña)</span>
+              </a>
+            </li>
+          )}
+          {contacto.mail && (
+            <li class="aparecer">
+              <a href={mailtoUrl(contacto.mail)} class={claseBoton}>
+                <Mail size={22} aria-hidden="true" class="shrink-0" />
+                <span class="text-sm break-all sm:text-base">
+                  <span class="sr-only">Mail: </span>
+                  {contacto.mail}
+                </span>
               </a>
             </li>
           )}
         </ul>
       ) : (
-        <p class="text-muted-foreground">Muy pronto vas a encontrar acá cómo contactarnos.</p>
+        <p class="text-on-dark-muted">Muy pronto vas a encontrar acá cómo contactarnos.</p>
       )
     }
   </div>
