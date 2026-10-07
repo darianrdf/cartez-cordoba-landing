@@ -1,4 +1,11 @@
 ---
+// Fuentes self-hosted: solo subset latin y los pesos que se usan
+import '@fontsource/inter/latin-400.css';
+import '@fontsource/inter/latin-500.css';
+import '@fontsource/inter/latin-600.css';
+import '@fontsource/fraunces/latin-600.css';
+import interRegular from '@fontsource/inter/files/inter-latin-400-normal.woff2?url';
+import frauncesSemibold from '@fontsource/fraunces/files/fraunces-latin-600-normal.woff2?url';
 import '@/styles/global.css';
 import { getImage } from 'astro:assets';
 import logoRedondo from '@/assets/logos/logo-redondo.png';
@@ -32,6 +39,8 @@ const imagenOG = new URL('/og.png', Astro.site);
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="generator" content={Astro.generator} />
+    <link rel="preload" href={interRegular} as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href={frauncesSemibold} as="font" type="font/woff2" crossorigin />
     <link rel="icon" type="image/png" sizes="48x48" href={favicon.src} />
     <link rel="apple-touch-icon" href={appleTouchIcon.src} />
     <link rel="canonical" href={urlCanonica} />

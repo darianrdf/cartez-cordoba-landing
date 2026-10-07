@@ -1,44 +1,77 @@
 @import "tailwindcss";
 
 /*
- * TEMA — único lugar donde se definen colores, radios y fuentes.
- * Para cambiar la paleta, editar solo estas variables. Los componentes
- * usan exclusivamente las clases derivadas (bg-background, text-primary, rounded-lg…).
- * Nombres compatibles con shadcn/ui.
+ * TEMA: único lugar donde se definen colores, radios y fuentes.
+ * Los componentes usan solo las clases derivadas (bg-navy, text-green-strong, bg-background…),
+ * nunca colores literales.
+ *
+ * Los colores de marca se repiten en src/lib/contraste.ts; contraste.test.ts verifica que
+ * coincidan y que cada combinación de texto cumpla WCAG AA. Reglas:
+ * - gold: solo decorativo, o texto sobre navy/navy-deep. Nunca texto sobre blanco.
+ * - green: acentos, íconos, bordes y texto grande. Para texto normal o botones, green-strong.
+ * - navy-muted / on-dark-muted: texto atenuado sobre fondos claros / oscuros.
  */
 :root {
-  /* Colores (provisorio: escala de grises) */
+  /* Marca */
+  --navy: #13216b;
+  --navy-deep: #0b1440;
+  --green: #1f9a50;
+  --green-strong: #177a3f;
+  --gold: #c9a13b;
+  --ink: #111111;
+  --white: #ffffff;
+
+  /* Derivados */
+  --tint-green: #eff7f2;
+  --tint-gold: #fbf6e8;
+  --navy-muted: #47528c;
+  --on-dark-muted: #c9cbd5;
+  --line: #e2e5ee; /* bordes y divisores sobre claro (decorativo, no texto) */
+
+  /* Semánticos (nombres compatibles con shadcn/ui) */
   /* --background tiene que ser claro: los logos (header y hero) son transparentes y pensados para fondo claro */
-  --background: #ffffff;
-  --foreground: #171717;
-  --card: #ffffff;
-  --card-foreground: #171717;
-  --muted: #f4f4f4;
-  --muted-foreground: #525252;
-  --primary: #262626;
-  --primary-foreground: #fafafa;
-  --secondary: #e5e5e5;
-  --secondary-foreground: #171717;
-  --accent: #ededed;
-  --accent-foreground: #171717;
-  --border: #d4d4d4;
-  --input: #d4d4d4;
-  --ring: #171717;
-  --placeholder: #d4d4d4;
-  --placeholder-foreground: #404040;
+  --background: var(--white);
+  --foreground: var(--ink);
+  --card: var(--white);
+  --card-foreground: var(--ink);
+  --muted: var(--tint-green);
+  --muted-foreground: var(--navy-muted);
+  --primary: var(--navy);
+  --primary-foreground: var(--white);
+  --secondary: var(--tint-gold);
+  --secondary-foreground: var(--navy);
+  --accent: var(--tint-green);
+  --accent-foreground: var(--navy);
+  --border: var(--line);
+  --input: var(--line);
+  --ring: var(--green-strong);
 
   /* Radios */
-  --radius: 0.5rem;
+  --radius: 0.75rem;
 
-  /* Tipografía (provisorio: fuentes del sistema) */
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  --font-display: var(--font-body);
+  /* Tipografía: Fraunces (títulos) e Inter (cuerpo), self-hosted con @fontsource (ver Layout.astro) */
+  --fuente-cuerpo: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --fuente-titulos: "Fraunces", Georgia, "Times New Roman", serif;
 
   /* Layout */
   --header-height: 4.5rem;
+  --header-height-compacto: 3.75rem;
 }
 
 @theme inline {
+  --color-navy: var(--navy);
+  --color-navy-deep: var(--navy-deep);
+  --color-green: var(--green);
+  --color-green-strong: var(--green-strong);
+  --color-gold: var(--gold);
+  --color-ink: var(--ink);
+  --color-white: var(--white);
+  --color-tint-green: var(--tint-green);
+  --color-tint-gold: var(--tint-gold);
+  --color-navy-muted: var(--navy-muted);
+  --color-on-dark-muted: var(--on-dark-muted);
+  --color-line: var(--line);
+
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -54,16 +87,14 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
-  --color-placeholder: var(--placeholder);
-  --color-placeholder-foreground: var(--placeholder-foreground);
 
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
+  --radius-sm: calc(var(--radius) - 6px);
+  --radius-md: calc(var(--radius) - 4px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
 
-  --font-sans: var(--font-body);
-  --font-display: var(--font-display);
+  --font-sans: var(--fuente-cuerpo);
+  --font-display: var(--fuente-titulos);
 }
 
 @layer base {
@@ -88,11 +119,50 @@
   h1,
   h2,
   h3 {
-    @apply font-display;
+    @apply font-display text-balance;
   }
 
   :focus-visible {
     outline: 2px solid var(--ring);
-    outline-offset: 2px;
+    outline-offset: 3px;
+  }
+}
+
+@layer components {
+  /* Título de sección: serif navy con una línea dorada decorativa arriba */
+  .titulo-seccion {
+    @apply font-display text-3xl font-semibold text-navy md:text-4xl;
+  }
+  .titulo-seccion::before {
+    content: "";
+    @apply mb-4 block h-1 w-12 rounded-full bg-gold;
+  }
+  .titulo-seccion.centrado::before {
+    @apply mx-auto;
+  }
+}
+
+/*
+ * Aparición al hacer scroll: CSS scroll-driven animations, sin JS.
+ * Sin soporte (p. ej. Firefox) o con movimiento reducido, el contenido se ve directamente.
+ */
+@keyframes aparecer {
+  from {
+    opacity: 0;
+    transform: translateY(1.5rem);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@supports (animation-timeline: view()) {
+  @media (prefers-reduced-motion: no-preference) {
+    .aparecer {
+      animation: aparecer linear both;
+      animation-timeline: view();
+      animation-range: entry 0% entry 60%;
+    }
   }
 }
