@@ -6,21 +6,22 @@
 import { getCollection } from 'astro:content';
 import { z } from 'astro/zod';
 import comisionJson from '@/data/comision.json';
+import { estadoEvento, normalizarFecha } from '@/lib/fechas';
 import type { Comision, Evento } from '@/lib/tipos';
 
-const hoyUTC = (ahora: Date) => new Date(Date.UTC(ahora.getFullYear(), ahora.getMonth(), ahora.getDate()));
-
-/** Eventos de hoy en adelante, ordenados por fecha de inicio. */
+/**
+ * Eventos no vencidos (próximos y en curso) en el instante `ahora`, ordenados por fecha de inicio.
+ * Se evalúa en el build; el navegador vuelve a filtrar al cargar (ver Eventos.astro).
+ */
 export async function getEventos(ahora: Date = new Date()): Promise<Evento[]> {
-  const desde = hoyUTC(ahora);
-  const entradas = await getCollection('eventos', ({ data }) => data.fecha >= desde);
+  const entradas = await getCollection('eventos');
 
   return entradas
-    .map(({ id, data, body }) => ({
+    .map(({ id, data, body }): Evento => ({
       id,
       titulo: data.titulo,
-      fecha: data.fecha.toISOString().slice(0, 10),
-      fechaFin: data.fecha.toISOString().slice(0, 10),
+      fecha: normalizarFecha(data.fecha),
+      fechaFin: normalizarFecha(data.fechaFin ?? data.fecha),
       lugar: data.lugar,
       categoria: data.categoria,
       organizador: data.organizador,
@@ -28,7 +29,8 @@ export async function getEventos(ahora: Date = new Date()): Promise<Evento[]> {
       flyer: data.flyer,
       descripcion: body?.trim() || undefined,
     }))
-    .sort((a, b) => a.fecha.localeCompare(b.fecha));
+    .filter((evento) => estadoEvento(evento, ahora) !== 'vencido')
+    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.fechaFin.localeCompare(b.fechaFin));
 }
 
 const comisionSchema = z.object({

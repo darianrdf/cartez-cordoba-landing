@@ -1,11 +1,13 @@
 ---
 import { Image } from 'astro:assets';
 import { getEventos } from '@/lib/data';
-import { ETIQUETAS_CATEGORIA, formatearFecha } from '@/lib/eventos';
+import { ETIQUETAS_CATEGORIA } from '@/lib/eventos';
+import { estadoEvento, formatearRango, inicioEvento, isoConOffset, vencimientoEvento } from '@/lib/fechas';
 import { instagramUrl, sitio } from '@/lib/sitio';
 import { cn } from '@/lib/utils';
 
-const eventos = await getEventos();
+const ahora = new Date();
+const eventos = await getEventos(ahora);
 ---
 
 <section id="eventos" aria-labelledby="eventos-titulo" class="border-b bg-muted">
@@ -15,24 +17,30 @@ const eventos = await getEventos();
       <p class="text-muted-foreground">Agenda del sector agropecuario: actividades propias y eventos a los que vamos.</p>
     </div>
 
+    <!-- Siempre se renderiza: el script lo muestra si todos los eventos vencieron después del build -->
+    <div data-eventos-vacio hidden={eventos.length > 0} class="rounded-lg border border-dashed bg-background p-8 text-center">
+      <p class="font-medium">Por ahora no hay eventos programados.</p>
+      <p class="mt-1 text-muted-foreground">
+        Seguinos en{' '}
+        <a href={instagramUrl()} class="underline underline-offset-4" target="_blank" rel="noopener noreferrer">
+          Instagram (@{sitio.contacto.instagram})
+        </a>{' '}
+        para enterarte de lo próximo.
+      </p>
+    </div>
+
     {
-      eventos.length === 0 ? (
-        <div class="rounded-lg border border-dashed bg-background p-8 text-center">
-          <p class="font-medium">Por ahora no hay eventos programados.</p>
-          <p class="mt-1 text-muted-foreground">
-            Seguinos en{' '}
-            <a href={instagramUrl()} class="underline underline-offset-4" target="_blank" rel="noopener noreferrer">
-              Instagram (@{sitio.contacto.instagram})
-            </a>{' '}
-            para enterarte de lo próximo.
-          </p>
-        </div>
-      ) : (
-        <ul class="grid gap-4 md:grid-cols-2">
+      eventos.length > 0 && (
+        <ul data-eventos-lista class="grid gap-4 md:grid-cols-2">
           {eventos.map((evento) => {
             const propio = evento.organizador === 'propio';
+            const enCurso = estadoEvento(evento, ahora) === 'en-curso';
             return (
-              <li>
+              <li
+                data-evento
+                data-inicio={isoConOffset(inicioEvento(evento.fecha))}
+                data-vence={isoConOffset(vencimientoEvento(evento.fechaFin))}
+              >
                 <article
                   class={cn(
                     'flex h-full flex-col overflow-hidden rounded-lg bg-card text-card-foreground',
@@ -62,6 +70,9 @@ const eventos = await getEventos();
                   )}
                   <div class="flex flex-1 flex-col gap-3 p-5">
                     <div class="flex flex-wrap gap-2 text-xs font-semibold">
+                      <span data-en-curso hidden={!enCurso} class="rounded-full bg-foreground px-2.5 py-1 text-background">
+                        En curso
+                      </span>
                       <span
                         class={cn(
                           'rounded-full px-2.5 py-1',
@@ -77,8 +88,8 @@ const eventos = await getEventos();
                     <h3 class="text-lg font-semibold">{evento.titulo}</h3>
                     <dl class="space-y-1 text-sm text-muted-foreground">
                       <dt class="sr-only">Fecha</dt>
-                      <dd class="first-letter:uppercase">
-                        <time datetime={evento.fecha}>{formatearFecha(evento.fecha)}</time>
+                      <dd>
+                        <time datetime={evento.fecha}>{formatearRango(evento.fecha, evento.fechaFin)}</time>
                       </dd>
                       <dt class="sr-only">Lugar</dt>
                       <dd>{evento.lugar}</dd>
@@ -104,3 +115,25 @@ const eventos = await getEventos();
     }
   </div>
 </section>
+
+<script>
+  // Segundo filtro: el sitio es estático, así que al cargar se ocultan los eventos que
+  // vencieron después del último build y se actualiza la etiqueta "En curso".
+  import { estadoPorInstantes } from '@/lib/fechas';
+
+  const ahora = Date.now();
+  const tarjetas = document.querySelectorAll<HTMLElement>('[data-evento]');
+  let visibles = 0;
+
+  for (const tarjeta of tarjetas) {
+    const estado = estadoPorInstantes(Date.parse(tarjeta.dataset.inicio!), Date.parse(tarjeta.dataset.vence!), ahora);
+    tarjeta.hidden = estado === 'vencido';
+    tarjeta.querySelector<HTMLElement>('[data-en-curso]')?.toggleAttribute('hidden', estado !== 'en-curso');
+    if (!tarjeta.hidden) visibles++;
+  }
+
+  if (tarjetas.length > 0 && visibles === 0) {
+    document.querySelector<HTMLElement>('[data-eventos-lista]')?.setAttribute('hidden', '');
+    document.querySelector<HTMLElement>('[data-eventos-vacio]')?.removeAttribute('hidden');
+  }
+</script>
