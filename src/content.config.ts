@@ -1,9 +1,7 @@
 import { defineCollection } from 'astro:content';
 import { glob } from 'astro/loaders';
 import { z } from 'astro/zod';
-
-export const CATEGORIAS = ['rural', 'congreso', 'charla', 'visita', 'peña', 'actividad'] as const;
-export const ORGANIZADORES = ['propio', 'externo'] as const;
+import { CATEGORIAS, ORGANIZADORES } from '@/lib/tipos';
 
 const eventos = defineCollection({
   loader: glob({ pattern: '**/*.md', base: './src/content/eventos' }),

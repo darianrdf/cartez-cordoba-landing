@@ -1,14 +1,18 @@
 ---
-import { datosComision, filasDestacadas } from '@/lib/comision';
+import { filasDestacadas, iniciales } from '@/lib/comision';
+import { getComision } from '@/lib/data';
 
-const filas = filasDestacadas(datosComision.miembros);
+const comision = await getComision();
+const filas = filasDestacadas(comision.miembros);
+
+const claseAvatar = 'aspect-square w-full max-w-32 rounded-full';
 ---
 
 <section id="comision" aria-labelledby="comision-titulo" class="border-b">
   <div class="mx-auto max-w-5xl space-y-10 px-4 py-16">
     <div class="space-y-2 text-center">
       <h2 id="comision-titulo" class="text-2xl font-bold md:text-3xl">La Comisión</h2>
-      <p class="text-muted-foreground">Etapa {datosComision.etapa}</p>
+      <p class="text-muted-foreground">Etapa {comision.etapa}</p>
     </div>
 
     <div class="space-y-6">
@@ -18,15 +22,27 @@ const filas = filasDestacadas(datosComision.miembros);
             {fila.map(({ nombre, cargo, foto }) => (
               <li class="w-[calc(50%-0.5rem)] max-w-56 sm:w-48">
                 <article class="flex h-full flex-col items-center gap-3 rounded-lg border bg-card p-4 text-center text-card-foreground">
-                  <img
-                    src={foto}
-                    alt={`Foto de ${nombre}`}
-                    width="160"
-                    height="160"
-                    loading="lazy"
-                    decoding="async"
-                    class="aspect-square w-full max-w-32 rounded-full bg-placeholder object-cover"
-                  />
+                  {foto ? (
+                    <img
+                      src={foto}
+                      alt={`Foto de ${nombre}`}
+                      width="160"
+                      height="160"
+                      loading="lazy"
+                      decoding="async"
+                      class:list={[claseAvatar, 'bg-placeholder object-cover']}
+                    />
+                  ) : (
+                    <span
+                      aria-hidden="true"
+                      class:list={[
+                        claseAvatar,
+                        'flex items-center justify-center bg-secondary text-3xl font-semibold text-secondary-foreground',
+                      ]}
+                    >
+                      {iniciales(nombre)}
+                    </span>
+                  )}
                   <div>
                     <h3 class="font-semibold">{nombre}</h3>
                     <p class="text-sm text-muted-foreground">{cargo}</p>

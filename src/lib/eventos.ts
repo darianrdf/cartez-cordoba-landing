@@ -1,13 +1,4 @@
-import { getCollection, type CollectionEntry } from 'astro:content';
-
-export type Evento = CollectionEntry<'eventos'>;
-
-/** Eventos de hoy en adelante, ordenados por fecha ascendente. Se evalúa al hacer el build. */
-export async function getProximosEventos(hoy: Date = new Date()): Promise<Evento[]> {
-  const inicioDelDia = new Date(Date.UTC(hoy.getFullYear(), hoy.getMonth(), hoy.getDate()));
-  const eventos = await getCollection('eventos', ({ data }) => data.fecha >= inicioDelDia);
-  return eventos.sort((a, b) => a.data.fecha.getTime() - b.data.fecha.getTime());
-}
+import type { Categoria } from '@/lib/tipos';
 
 const formatoFecha = new Intl.DateTimeFormat('es-AR', {
   weekday: 'long',
@@ -17,16 +8,12 @@ const formatoFecha = new Intl.DateTimeFormat('es-AR', {
   timeZone: 'UTC',
 });
 
-export function formatearFecha(fecha: Date): string {
-  return formatoFecha.format(fecha);
+/** Recibe una fecha civil 'YYYY-MM-DD'. */
+export function formatearFecha(fecha: string): string {
+  return formatoFecha.format(new Date(`${fecha}T00:00:00Z`));
 }
 
-/** yyyy-mm-dd para el atributo datetime de <time>. */
-export function fechaISO(fecha: Date): string {
-  return fecha.toISOString().slice(0, 10);
-}
-
-export const ETIQUETAS_CATEGORIA: Record<Evento['data']['categoria'], string> = {
+export const ETIQUETAS_CATEGORIA: Record<Categoria, string> = {
   rural: 'Rural',
   congreso: 'Congreso',
   charla: 'Charla',

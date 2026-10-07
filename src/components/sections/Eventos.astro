@@ -1,10 +1,11 @@
 ---
 import { Image } from 'astro:assets';
-import { ETIQUETAS_CATEGORIA, fechaISO, formatearFecha, getProximosEventos } from '@/lib/eventos';
+import { getEventos } from '@/lib/data';
+import { ETIQUETAS_CATEGORIA, formatearFecha } from '@/lib/eventos';
 import { instagramUrl, sitio } from '@/lib/sitio';
 import { cn } from '@/lib/utils';
 
-const eventos = await getProximosEventos();
+const eventos = await getEventos();
 ---
 
 <section id="eventos" aria-labelledby="eventos-titulo" class="border-b bg-muted">
@@ -28,9 +29,8 @@ const eventos = await getProximosEventos();
         </div>
       ) : (
         <ul class="grid gap-4 md:grid-cols-2">
-          {eventos.map(({ data, body }) => {
-            const propio = data.organizador === 'propio';
-            const descripcion = body?.trim();
+          {eventos.map((evento) => {
+            const propio = evento.organizador === 'propio';
             return (
               <li>
                 <article
@@ -39,14 +39,26 @@ const eventos = await getProximosEventos();
                     propio ? 'border-2 border-primary' : 'border border-dashed',
                   )}
                 >
-                  {data.flyer && (
-                    <Image
-                      src={data.flyer}
-                      alt={`Flyer de ${data.titulo}`}
-                      widths={[400, 800]}
-                      sizes="(min-width: 768px) 480px, 100vw"
+                  {typeof evento.flyer === 'string' ? (
+                    <img
+                      src={evento.flyer}
+                      alt={`Flyer de ${evento.titulo}`}
+                      width="800"
+                      height="450"
+                      loading="lazy"
+                      decoding="async"
                       class="aspect-video w-full object-cover"
                     />
+                  ) : (
+                    evento.flyer && (
+                      <Image
+                        src={evento.flyer}
+                        alt={`Flyer de ${evento.titulo}`}
+                        widths={[400, 800]}
+                        sizes="(min-width: 768px) 480px, 100vw"
+                        class="aspect-video w-full object-cover"
+                      />
+                    )
                   )}
                   <div class="flex flex-1 flex-col gap-3 p-5">
                     <div class="flex flex-wrap gap-2 text-xs font-semibold">
@@ -59,27 +71,27 @@ const eventos = await getProximosEventos();
                         {propio ? 'Organiza la Comisión' : 'Evento externo'}
                       </span>
                       <span class="rounded-full bg-secondary px-2.5 py-1 text-secondary-foreground">
-                        {ETIQUETAS_CATEGORIA[data.categoria]}
+                        {ETIQUETAS_CATEGORIA[evento.categoria]}
                       </span>
                     </div>
-                    <h3 class="text-lg font-semibold">{data.titulo}</h3>
+                    <h3 class="text-lg font-semibold">{evento.titulo}</h3>
                     <dl class="space-y-1 text-sm text-muted-foreground">
                       <dt class="sr-only">Fecha</dt>
                       <dd class="first-letter:uppercase">
-                        <time datetime={fechaISO(data.fecha)}>{formatearFecha(data.fecha)}</time>
+                        <time datetime={evento.fecha}>{formatearFecha(evento.fecha)}</time>
                       </dd>
                       <dt class="sr-only">Lugar</dt>
-                      <dd>{data.lugar}</dd>
+                      <dd>{evento.lugar}</dd>
                     </dl>
-                    {descripcion && <p class="text-sm">{descripcion}</p>}
-                    {data.link && (
+                    {evento.descripcion && <p class="text-sm">{evento.descripcion}</p>}
+                    {evento.link && (
                       <a
-                        href={data.link}
+                        href={evento.link}
                         target="_blank"
                         rel="noopener noreferrer"
                         class="mt-auto self-start text-sm font-semibold underline underline-offset-4"
                       >
-                        Más información<span class="sr-only"> sobre {data.titulo} (abre en otra pestaña)</span>
+                        Más información<span class="sr-only"> sobre {evento.titulo} (abre en otra pestaña)</span>
                       </a>
                     )}
                   </div>

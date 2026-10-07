@@ -1,19 +1,4 @@
-import comision from '@/data/comision.json';
-
-export interface Miembro {
-  cargo: string;
-  nombre: string;
-  foto: string;
-  orden: number;
-  destacado: boolean;
-}
-
-export interface Comision {
-  etapa: string;
-  miembros: Miembro[];
-}
-
-export const datosComision: Comision = comision;
+import type { Miembro } from '@/lib/tipos';
 
 /**
  * Agrupa los miembros destacados en filas según `orden` (mismo orden = misma fila),
@@ -28,4 +13,14 @@ export function filasDestacadas(miembros: Miembro[]): Miembro[][] {
     filas.set(miembro.orden, fila);
   }
   return [...filas.entries()].sort(([a], [b]) => a - b).map(([, fila]) => fila);
+}
+
+/** Iniciales del nombre y el primer apellido: "Darián Rodriguez Dieguez" → "DR". */
+export function iniciales(nombre: string): string {
+  return nombre
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map((parte) => parte.charAt(0).toLocaleUpperCase('es'))
+    .join('');
 }
