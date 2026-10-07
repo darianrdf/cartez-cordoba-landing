@@ -4,13 +4,31 @@ import logoHorizontal from '@/assets/logos/logo-horizontal.png';
 import { secciones } from '@/data/navegacion';
 import { getSitio } from '@/lib/data';
 import { nombreCompleto } from '@/lib/sitio';
+import { cn } from '@/lib/utils';
 
 const sitio = await getSitio();
+
+const claseLink =
+  'relative block rounded-md px-3 py-3 text-base font-medium text-navy md:py-2 md:text-sm ' +
+  // Subrayado verde animado en hover y foco
+  'after:absolute after:inset-x-3 after:bottom-1.5 after:h-0.5 after:origin-left after:scale-x-0 after:rounded-full after:bg-green ' +
+  'after:transition-transform after:duration-300 hover:after:scale-x-100 focus-visible:after:scale-x-100 motion-reduce:after:transition-none';
+const claseBoton =
+  'block rounded-full bg-green-strong px-5 py-3 text-center text-base font-semibold text-white transition-colors ' +
+  'hover:bg-navy md:py-2 md:text-sm motion-reduce:transition-none';
 ---
 
+<!-- Referencia para saber si la página está scrolleada (compacta el header) -->
+<div data-sentinela-header aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-2"></div>
+
 <!-- El fondo debe ser claro: el logo es transparente y está pensado para fondos claros -->
-<header class="sticky top-0 z-40 border-b bg-background">
-  <div class="relative mx-auto flex h-(--header-height) max-w-5xl items-center justify-between px-4">
+<header
+  data-header
+  class="group sticky top-0 z-40 border-b border-line bg-white transition-shadow duration-300 data-compacto:shadow-md motion-reduce:transition-none"
+>
+  <div
+    class="relative mx-auto flex h-(--header-height) max-w-6xl items-center justify-between px-4 transition-[height] duration-300 group-data-compacto:h-(--header-height-compacto) motion-reduce:transition-none"
+  >
     <a href="#inicio" class="flex items-center rounded-md">
       <Image
         src={logoHorizontal}
@@ -18,14 +36,14 @@ const sitio = await getSitio();
         height={64}
         densities={[1, 2]}
         loading="eager"
-        class="h-14 w-auto md:h-16"
+        class="h-14 w-auto transition-[height] duration-300 group-data-compacto:h-11 md:h-16 md:group-data-compacto:h-12 motion-reduce:transition-none"
       />
     </a>
 
     <button
       type="button"
       id="menu-boton"
-      class="inline-flex size-11 items-center justify-center rounded-md hover:bg-accent md:hidden"
+      class="inline-flex size-11 items-center justify-center rounded-md text-navy hover:bg-tint-green md:hidden"
       aria-controls="menu-principal"
       aria-expanded="false"
       aria-label="Abrir menú"
@@ -39,16 +57,13 @@ const sitio = await getSitio();
     <nav
       id="menu-principal"
       aria-label="Principal"
-      class="absolute inset-x-0 top-full hidden border-b bg-background md:static md:block md:border-0"
+      class="absolute inset-x-0 top-full hidden border-b border-line bg-white shadow-lg md:static md:block md:border-0 md:shadow-none"
     >
-      <ul class="flex flex-col px-4 py-2 md:flex-row md:gap-1 md:p-0">
+      <ul class="flex flex-col gap-1 px-4 py-3 md:flex-row md:items-center md:gap-1 md:p-0">
         {
           secciones.map(({ id, etiqueta }) => (
-            <li>
-              <a
-                href={`#${id}`}
-                class="block rounded-md px-3 py-3 text-base font-medium hover:bg-accent md:py-2 md:text-sm"
-              >
+            <li class={cn(id === 'contacto' && 'mt-2 md:mt-0 md:ml-3')}>
+              <a href={`#${id}`} class={id === 'contacto' ? claseBoton : claseLink}>
                 {etiqueta}
               </a>
             </li>
@@ -60,6 +75,14 @@ const sitio = await getSitio();
 </header>
 
 <script>
+  const header = document.querySelector<HTMLElement>('[data-header]');
+  const sentinela = document.querySelector('[data-sentinela-header]');
+  if (header && sentinela) {
+    new IntersectionObserver(([entrada]) => {
+      header.toggleAttribute('data-compacto', !entrada?.isIntersecting);
+    }).observe(sentinela);
+  }
+
   const boton = document.getElementById('menu-boton');
   const menu = document.getElementById('menu-principal');
 
