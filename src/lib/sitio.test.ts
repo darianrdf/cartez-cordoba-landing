@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import sitioJson from '../data/sitio.json';
-import { instagramUrl, mailtoUrl, nombreCompleto, parsearSitio, whatsappUrl, type FilaSitio } from './sitio';
+import { instagramUrl, mailtoUrl, nombreCompleto, parrafos, parsearSitio, whatsappUrl, type FilaSitio } from './sitio';
 
 const filaBase: FilaSitio = {
   nombre: 'Comisión Córdoba',
@@ -13,10 +13,17 @@ const filaBase: FilaSitio = {
   whatsapp: '5492954588587',
   whatsapp_mensaje: 'Hola, quiero sumarme a la Comisión Córdoba',
   conocenos_ateneo_titulo: 'A',
-  conocenos_ateneo_texto: 'a',
+  conocenos_ateneo_texto: 'Primero.\n\nSegundo.',
+  conocenos_ateneo_destacado: 'Frase destacada.',
   conocenos_comision_titulo: 'C',
-  conocenos_comision_texto: 'c',
-  objetivos: ['Uno', 'Dos'],
+  conocenos_comision_texto: 'Único.',
+  conocenos_comision_destacado: '',
+  sumate_texto: 'Invitación uno.\n\nInvitación dos.',
+  eventos_vacio_texto: '  Pronto habrá eventos.  ',
+  objetivos: [
+    { titulo: 'Uno', descripcion: 'Desc uno' },
+    { titulo: 'Dos', descripcion: 'Desc dos' },
+  ],
   hero_imagen_escritorio: 'hero.jpg',
   hero_imagen_celular: 'https://xyz.supabase.co/storage/v1/object/public/fotos/hero.webp',
   franja_imagen: 'franja.jpg',
@@ -39,7 +46,18 @@ describe('parsearSitio', () => {
       whatsapp: '5492954588587',
       whatsappMensaje: 'Hola, quiero sumarme a la Comisión Córdoba',
     });
-    expect(sitio.conocenos.ateneo).toEqual({ titulo: 'A', texto: 'a' });
+    expect(sitio.conocenos.ateneo).toEqual({
+      titulo: 'A',
+      parrafos: ['Primero.', 'Segundo.'],
+      destacado: 'Frase destacada.',
+    });
+    expect(sitio.conocenos.comision).toEqual({ titulo: 'C', parrafos: ['Único.'], destacado: undefined });
+    expect(sitio.objetivos).toEqual([
+      { titulo: 'Uno', descripcion: 'Desc uno' },
+      { titulo: 'Dos', descripcion: 'Desc dos' },
+    ]);
+    expect(sitio.sumate).toEqual(['Invitación uno.', 'Invitación dos.']);
+    expect(sitio.eventosVacio).toBe('Pronto habrá eventos.');
     expect(nombreCompleto(sitio)).toBe('Comisión Córdoba – Ateneo CARTEZ');
   });
 
@@ -65,12 +83,63 @@ describe('parsearSitio', () => {
     expect(parsear({ ...filaBase, whatsapp: '-' }).contacto.whatsapp).toBeUndefined();
   });
 
-  it('descarta objetivos vacíos', () => {
-    expect(parsear({ ...filaBase, objetivos: ['Uno', ' ', ''] }).objetivos).toEqual(['Uno']);
+  it('descarta objetivos sin título y recorta espacios', () => {
+    const objetivos = [
+      { titulo: '  Uno  ', descripcion: '  Desc  ' },
+      { titulo: ' ', descripcion: 'Sin título' },
+    ];
+    expect(parsear({ ...filaBase, objetivos }).objetivos).toEqual([{ titulo: 'Uno', descripcion: 'Desc' }]);
+  });
+
+  it('rechaza objetivos con el formato viejo (lista de textos)', () => {
+    expect(() => parsear({ ...filaBase, objetivos: ['Uno'] })).toThrow();
+  });
+
+  it('la frase destacada es opcional', () => {
+    const { conocenos_ateneo_destacado, ...sinDestacado } = filaBase;
+    expect(parsear(sinDestacado).conocenos.ateneo.destacado).toBeUndefined();
   });
 
   it('rechaza una fila sin nombre', () => {
     expect(() => parsear({ ...filaBase, nombre: '' })).toThrow();
+  });
+});
+
+describe('parrafos', () => {
+  it('separa por líneas en blanco y une los saltos simples', () => {
+    expect(parrafos('Uno\nsigue.\n\n  Dos.  \n \n\nTres.')).toEqual(['Uno sigue.', 'Dos.', 'Tres.']);
+  });
+
+  it('acepta finales de línea de Windows', () => {
+    expect(parrafos('Uno.\r\n\r\nDos.')).toEqual(['Uno.', 'Dos.']);
+  });
+
+  it('un texto vacío no genera párrafos', () => {
+    expect(parrafos('   ')).toEqual([]);
+  });
+});
+
+describe('sitio.json del repo', () => {
+  const sitio = parsear(sitioJson);
+
+  it('tiene los textos reales cargados (sin relleno)', () => {
+    const todo = JSON.stringify(sitioJson).toLowerCase();
+    for (const relleno of ['provisorio', 'lorem', 'texto de relleno']) expect(todo).not.toContain(relleno);
+  });
+
+  it('tiene 5 objetivos con título y descripción', () => {
+    expect(sitio.objetivos).toHaveLength(5);
+    for (const o of sitio.objetivos) {
+      expect(o.titulo).toBeTruthy();
+      expect(o.descripcion).toBeTruthy();
+    }
+  });
+
+  it('divide Conocenos y la invitación en párrafos', () => {
+    expect(sitio.conocenos.ateneo.parrafos).toHaveLength(4);
+    expect(sitio.conocenos.ateneo.destacado).toBeTruthy();
+    expect(sitio.conocenos.comision.parrafos).toHaveLength(2);
+    expect(sitio.sumate).toHaveLength(2);
   });
 });
 

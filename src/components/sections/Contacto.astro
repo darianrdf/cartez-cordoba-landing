@@ -5,7 +5,7 @@ import Instagram from '@/components/iconos/Instagram.astro';
 import { getSitio } from '@/lib/data';
 import { instagramUrl, mailtoUrl, whatsappUrl } from '@/lib/sitio';
 
-const { contacto } = await getSitio();
+const { contacto, sumate } = await getSitio();
 
 // Botones dorados con texto navy (5,9:1). Cada medio es opcional: solo se renderizan los que tienen dato.
 const claseBoton =
@@ -16,9 +16,15 @@ const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.insta
 
 <section id="contacto" aria-labelledby="contacto-titulo" class="bg-navy text-white">
   <div class="mx-auto max-w-3xl space-y-10 px-4 py-20 text-center md:py-28">
-    <div class="space-y-4">
+    <div class="space-y-5">
       <h2 id="contacto-titulo" class="titulo-seccion centrado text-white">Sumate</h2>
-      <p class="text-lg text-on-dark-muted">Escribinos y te contamos cómo participar de la Comisión.</p>
+      {
+        sumate.map((parrafo, i) => (
+          <p class:list={['mx-auto max-w-2xl text-base leading-relaxed text-pretty md:text-lg', i === 0 ? 'text-white' : 'text-on-dark-muted']}>
+            {parrafo}
+          </p>
+        ))
+      }
     </div>
 
     {
@@ -53,9 +59,10 @@ const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.insta
             <li class="aparecer">
               <a href={mailtoUrl(contacto.mail)} class={claseBoton}>
                 <Mail size={22} aria-hidden="true" class="shrink-0" />
-                <span class="text-sm break-all sm:text-base">
+                <span class="text-sm sm:text-base">
                   <span class="sr-only">Mail: </span>
-                  {contacto.mail}
+                  {/* Permite cortar antes de la @ en pantallas angostas */}
+                  {contacto.mail.split('@')[0]}<wbr />@{contacto.mail.split('@').slice(1).join('@')}
                 </span>
               </a>
             </li>

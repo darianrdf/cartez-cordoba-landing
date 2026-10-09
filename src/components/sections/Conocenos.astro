@@ -7,44 +7,68 @@ import Sprout from '@lucide/astro/icons/sprout';
 import { getSitio } from '@/lib/data';
 
 const sitio = await getSitio();
+const { ateneo, comision } = sitio.conocenos;
 
-const bloques = [sitio.conocenos.ateneo, sitio.conocenos.comision];
 // Íconos decorativos para los objetivos; se repiten en orden si hay más objetivos que íconos.
-const iconos = [Sprout, Handshake, GraduationCap, Network, Lightbulb];
+const iconos = [Sprout, Handshake, Network, GraduationCap, Lightbulb];
+
+const claseParrafo = 'text-base leading-relaxed text-ink md:text-lg';
+const claseDestacado =
+  'border-l-4 border-gold pl-5 font-display text-xl leading-snug font-semibold text-navy md:text-2xl';
 ---
 
 <section id="conocenos" aria-labelledby="conocenos-titulo" class="bg-white">
   <div class="mx-auto max-w-6xl space-y-14 px-4 py-20 md:py-28">
     <h2 id="conocenos-titulo" class="titulo-seccion">Conocenos</h2>
 
-    <div class="grid gap-10 md:grid-cols-2 md:gap-16">
-      {
-        bloques.map(({ titulo, texto }) => (
-          <article class="aparecer space-y-3">
-            <h3 class="font-display text-2xl font-semibold text-navy">{titulo}</h3>
-            <p class="text-lg leading-relaxed text-ink">{texto}</p>
-          </article>
-        ))
-      }
+    <div class="grid gap-10 md:grid-cols-5 md:gap-14">
+      <article class="aparecer max-w-prose space-y-5 md:col-span-3">
+        <h3 class="font-display text-2xl font-semibold text-navy">{ateneo.titulo}</h3>
+        {ateneo.parrafos.map((parrafo) => <p class={claseParrafo}>{parrafo}</p>)}
+        {
+          ateneo.destacado && (
+            <blockquote class={claseDestacado}>
+              <p>{ateneo.destacado}</p>
+            </blockquote>
+          )
+        }
+      </article>
+
+      <article class="aparecer space-y-5 self-start rounded-xl bg-tint-gold p-6 md:col-span-2 md:p-8">
+        <h3 class="font-display text-2xl font-semibold text-navy">{comision.titulo}</h3>
+        {comision.parrafos.map((parrafo) => <p class={claseParrafo}>{parrafo}</p>)}
+        {
+          comision.destacado && (
+            <blockquote class={claseDestacado}>
+              <p>{comision.destacado}</p>
+            </blockquote>
+          )
+        }
+      </article>
     </div>
 
-    <div class="space-y-6">
-      <h3 class="font-display text-2xl font-semibold text-navy">Nuestros objetivos</h3>
-      <ol class="grid gap-4 sm:grid-cols-2 lg:gap-6">
-        {
-          sitio.objetivos.map((objetivo, i) => {
-            const Icono = iconos[i % iconos.length]!;
-            return (
-              <li class="aparecer flex items-center gap-4 rounded-xl border border-line bg-white p-6 shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-green hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0">
-                <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-tint-green text-green">
-                  <Icono size={24} aria-hidden="true" />
-                </span>
-                <span class="text-base leading-relaxed text-ink">{objetivo}</span>
-              </li>
-            );
-          })
-        }
-      </ol>
-    </div>
+    {
+      sitio.objetivos.length > 0 && (
+        <div class="space-y-6">
+          <h3 class="font-display text-2xl font-semibold text-navy">Nuestros objetivos</h3>
+          <ol class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 lg:gap-6">
+            {sitio.objetivos.map(({ titulo, descripcion }, i) => {
+              const Icono = iconos[i % iconos.length]!;
+              return (
+                <li class="aparecer flex flex-col items-start gap-4 rounded-xl border border-line bg-white p-6 sm:flex-row shadow-sm transition duration-300 hover:-translate-y-0.5 hover:border-green hover:shadow-md motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+                  <span class="flex size-12 shrink-0 items-center justify-center rounded-full bg-tint-green text-green">
+                    <Icono size={24} aria-hidden="true" />
+                  </span>
+                  <div class="space-y-2">
+                    <h4 class="font-display text-lg leading-snug font-semibold text-navy">{titulo}</h4>
+                    {descripcion && <p class="text-base leading-relaxed text-ink">{descripcion}</p>}
+                  </div>
+                </li>
+              );
+            })}
+          </ol>
+        </div>
+      )
+    }
   </div>
 </section>

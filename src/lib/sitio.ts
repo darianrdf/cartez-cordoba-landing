@@ -34,10 +34,21 @@ export const filaSitioSchema = z.object({
   whatsapp: opcional,
   whatsapp_mensaje: opcional,
   conocenos_ateneo_titulo: z.string(),
+  /** Párrafos separados por una línea en blanco. */
   conocenos_ateneo_texto: z.string(),
+  conocenos_ateneo_destacado: opcional,
   conocenos_comision_titulo: z.string(),
   conocenos_comision_texto: z.string(),
-  objetivos: z.array(z.string()),
+  conocenos_comision_destacado: opcional,
+  /** Invitación a sumarse: párrafos separados por una línea en blanco. */
+  sumate_texto: z.string(),
+  eventos_vacio_texto: z.string(),
+  objetivos: z.array(
+    z.object({
+      titulo: z.string().trim(),
+      descripcion: z.string().trim(),
+    }),
+  ),
   hero_imagen_escritorio: referenciaImagen,
   hero_imagen_celular: referenciaImagen,
   franja_imagen: referenciaImagen,
@@ -63,10 +74,21 @@ export function parsearSitio(fila: unknown, resolverImagen: ResolverImagen): Sit
       whatsappMensaje: f.whatsapp_mensaje,
     },
     conocenos: {
-      ateneo: { titulo: f.conocenos_ateneo_titulo, texto: f.conocenos_ateneo_texto },
-      comision: { titulo: f.conocenos_comision_titulo, texto: f.conocenos_comision_texto },
+      ateneo: {
+        titulo: f.conocenos_ateneo_titulo,
+        parrafos: parrafos(f.conocenos_ateneo_texto),
+        destacado: f.conocenos_ateneo_destacado,
+      },
+      comision: {
+        titulo: f.conocenos_comision_titulo,
+        parrafos: parrafos(f.conocenos_comision_texto),
+        destacado: f.conocenos_comision_destacado,
+      },
     },
-    objetivos: f.objetivos.map((o) => o.trim()).filter(Boolean),
+    // Un objetivo sin título no se muestra.
+    objetivos: f.objetivos.filter((o) => o.titulo),
+    sumate: parrafos(f.sumate_texto),
+    eventosVacio: f.eventos_vacio_texto.trim(),
     imagenes: {
       heroEscritorio: resolverImagen(f.hero_imagen_escritorio),
       heroCelular: resolverImagen(f.hero_imagen_celular),
@@ -74,6 +96,17 @@ export function parsearSitio(fila: unknown, resolverImagen: ResolverImagen): Sit
     },
     franjaFrase: f.franja_frase.trim(),
   };
+}
+
+/**
+ * Divide un texto en párrafos por líneas en blanco (como un textarea del dashboard).
+ * Los saltos de línea simples dentro de un párrafo se unen con un espacio.
+ */
+export function parrafos(texto: string): string[] {
+  return texto
+    .split(/\r?\n\s*\r?\n/)
+    .map((p) => p.replace(/\s*\r?\n\s*/g, ' ').trim())
+    .filter(Boolean);
 }
 
 /** "Comisión Córdoba – Ateneo CARTEZ" (alt de los logos). */

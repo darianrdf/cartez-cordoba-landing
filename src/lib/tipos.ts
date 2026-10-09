@@ -46,7 +46,14 @@ export interface Comision {
 
 export interface BloqueTexto {
   titulo: string;
-  texto: string;
+  parrafos: string[];
+  /** Frase destacada al final del bloque (se muestra como cita). */
+  destacado?: string;
+}
+
+export interface Objetivo {
+  titulo: string;
+  descripcion: string;
 }
 
 /** Contenido editable del sitio (textos y contactos). */
@@ -68,7 +75,11 @@ export interface Sitio {
     ateneo: BloqueTexto;
     comision: BloqueTexto;
   };
-  objetivos: string[];
+  objetivos: Objetivo[];
+  /** Invitación a sumarse (sección Contacto), en párrafos. */
+  sumate: string[];
+  /** Mensaje del estado vacío de Eventos. */
+  eventosVacio: string;
   imagenes: {
     heroEscritorio: Imagen;
     heroCelular: Imagen;

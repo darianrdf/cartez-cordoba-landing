@@ -13,6 +13,7 @@ import {
   isoConOffset,
   vencimientoEvento,
 } from '@/lib/fechas';
+import Instagram from '@/components/iconos/Instagram.astro';
 import { FOTOS_POR_CATEGORIA } from '@/lib/fotos';
 import { propsImagen } from '@/lib/imagenes';
 import { instagramUrl } from '@/lib/sitio';
@@ -20,7 +21,8 @@ import { cn } from '@/lib/utils';
 
 const ahora = new Date();
 const eventos = await getEventos(ahora);
-const { instagram } = (await getSitio()).contacto;
+const sitio = await getSitio();
+const { instagram } = sitio.contacto;
 ---
 
 <section id="eventos" aria-labelledby="eventos-titulo" class="bg-tint-green">
@@ -36,23 +38,24 @@ const { instagram } = (await getSitio()).contacto;
     <div
       data-eventos-vacio
       hidden={eventos.length > 0}
-      class="rounded-xl border-2 border-dashed border-green bg-white p-10 text-center"
+      class="mx-auto flex max-w-2xl flex-col items-center gap-6 rounded-xl border-2 border-dashed border-green bg-white px-6 py-10 text-center md:px-10"
     >
-      <p class="font-display text-xl font-semibold text-navy">Por ahora no hay eventos programados.</p>
+      <span class="flex size-14 items-center justify-center rounded-full bg-tint-green text-green">
+        <CalendarDays size={28} aria-hidden="true" />
+      </span>
+      <p class="font-display text-xl leading-snug font-semibold text-pretty text-navy md:text-2xl">{sitio.eventosVacio}</p>
       {
         instagram && (
-          <p class="mt-2 text-ink">
-            Seguinos en{' '}
-            <a
-              href={instagramUrl(instagram)}
-              class="font-semibold text-green-strong underline underline-offset-4"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Instagram (@{instagram})
-            </a>{' '}
-            para enterarte de lo próximo.
-          </p>
+          <a
+            href={instagramUrl(instagram)}
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-green-strong px-6 font-semibold text-white shadow-md transition-colors hover:bg-navy motion-reduce:transition-none"
+          >
+            <Instagram size={20} />
+            Seguinos en Instagram
+            <span class="sr-only">(@{instagram}, abre en otra pestaña)</span>
+          </a>
         )
       }
     </div>
