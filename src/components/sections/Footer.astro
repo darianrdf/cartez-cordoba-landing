@@ -3,11 +3,11 @@ import { Image } from 'astro:assets';
 import Mail from '@lucide/astro/icons/mail';
 import logoDisco from '@/assets/logos/logo-disco.png';
 import Instagram from '@/components/iconos/Instagram.astro';
-import { secciones } from '@/data/navegacion';
-import { getSitio } from '@/lib/data';
+import { getSecciones, getSitio } from '@/lib/data';
 import { instagramUrl, mailtoUrl, nombreCompleto } from '@/lib/sitio';
 
 const sitio = await getSitio();
+const secciones = await getSecciones();
 const { instagram, mail } = sitio.contacto;
 const anio = new Date().getFullYear();
 

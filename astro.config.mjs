@@ -12,9 +12,13 @@ export default defineConfig({
   // El CSS es chico y es una sola página: inlinearlo evita un recurso que bloquea el render.
   build: { inlineStylesheets: 'always' },
   image: {
-    // Imágenes remotas permitidas (hero, franja, eventos y fotos de la comisión vendrán de
-    // Supabase Storage). Cuando exista el proyecto, se puede restringir al hostname concreto.
-    remotePatterns: [{ protocol: 'https', hostname: '**.supabase.co' }],
+    // Imágenes remotas: solo el bucket galeria de cartez-prod y cartez-dev (Supabase Storage).
+    // Se descargan y optimizan en el build: el visitante nunca le pide nada a Supabase.
+    // Mantener en sincronía con HOSTS_SUPABASE de src/lib/contenido.ts.
+    remotePatterns: [
+      { protocol: 'https', hostname: 'ymxtvtzzkqdngsavuigl.supabase.co', pathname: '/storage/v1/object/public/galeria/**' },
+      { protocol: 'https', hostname: 'gaibxlhpjeslqyyfkoho.supabase.co', pathname: '/storage/v1/object/public/galeria/**' },
+    ],
   },
   vite: {
     plugins: [tailwindcss()],

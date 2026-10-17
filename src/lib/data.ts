@@ -1,16 +1,19 @@
 /**
  * Capa de acceso a datos. ÚNICO lugar que conoce de dónde salen eventos, comisión y
  * contenido del sitio.
- * Hoy: Content Collection de Astro (src/content/eventos), src/data/comision.json y
- * src/data/sitio.json. Cuando la fuente pase a Supabase, solo cambia este archivo.
+ * - Sitio y comisión: Supabase (`contenido_landing()`), leído una sola vez por build en
+ *   src/lib/contenido.ts, con el snapshot src/data/sitio.json si la lectura falla.
+ * - Eventos: Content Collection de Astro (src/content/eventos) hasta que exista el módulo de
+ *   eventos del dashboard.
  */
 import { getCollection } from 'astro:content';
-import { z } from 'astro/zod';
-import comisionJson from '@/data/comision.json';
-import sitioJson from '@/data/sitio.json';
+import snapshot from '@/data/sitio.json';
+import { obtenerContenido, TIMEOUT_POR_DEFECTO_MS, urlStorage, type Contenido } from '@/lib/contenido';
+import { esProduccion } from '@/lib/entorno';
 import { estadoEvento, normalizarFecha } from '@/lib/fechas';
 import { parsearSitio } from '@/lib/sitio';
-import type { Comision, Evento, Imagen, Sitio } from '@/lib/tipos';
+import type { Comision, Evento, FotoGaleria, Imagen, Sitio } from '@/lib/tipos';
+import { secciones, type Seccion } from '@/data/navegacion';
 
 /** Fotos locales disponibles para referenciar por nombre de archivo (hero, franja, etc.). */
 const fotosLocales = Object.fromEntries(
@@ -21,13 +24,31 @@ const fotosLocales = Object.fromEntries(
 
 /**
  * Resuelve una referencia de imagen: las URL quedan como string (imagen remota) y los nombres
- * de archivo se buscan en src/assets/fotos/. Con Supabase, las imágenes serán URLs de Storage.
+ * de archivo se buscan en src/assets/fotos/.
  */
 function resolverImagen(referencia: string): Imagen {
   if (/^https:\/\//.test(referencia)) return referencia;
   const foto = fotosLocales[referencia];
   if (!foto) throw new Error(`No existe la imagen "${referencia}" en src/assets/fotos/`);
   return foto;
+}
+
+/** Variable de entorno del build: Cloudflare la pasa en process.env; en local, el archivo .env. */
+function variable(nombre: string): string | undefined {
+  return process.env[nombre] || (import.meta.env[nombre] as string | undefined) || undefined;
+}
+
+let contenidoDelBuild: Promise<Contenido> | undefined;
+
+/** Una sola lectura de Supabase por build, aunque cada sección pida su parte. */
+function contenido(): Promise<Contenido> {
+  contenidoDelBuild ??= obtenerContenido({
+    url: variable('SUPABASE_URL'),
+    clave: variable('SUPABASE_ANON_KEY'),
+    timeoutMs: Number(variable('CONTENIDO_TIMEOUT_MS')) || TIMEOUT_POR_DEFECTO_MS,
+    snapshot,
+  });
+  return contenidoDelBuild;
 }
 
 /**
@@ -55,27 +76,46 @@ export async function getEventos(ahora: Date = new Date()): Promise<Evento[]> {
     .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.fechaFin.localeCompare(b.fechaFin));
 }
 
-const comisionSchema = z.object({
-  etapa: z.string(),
-  miembros: z.array(
-    z.object({
-      cargo: z.string(),
-      nombre: z.string(),
-      foto: z
-        .string()
-        .nullish()
-        .transform((foto) => foto?.trim() || undefined),
-      orden: z.number().int(),
-      destacado: z.boolean(),
-    }),
-  ),
-});
-
+/** Mesa vigente. La función ya filtra los cargos que se muestran en la landing. */
 export async function getComision(): Promise<Comision> {
-  return comisionSchema.parse(comisionJson);
+  const { origen, mesa } = await contenido();
+  return {
+    etapa: mesa.etapa ?? undefined,
+    miembros: mesa.integrantes.map((i) => ({
+      cargo: i.cargo,
+      nombre: i.nombre,
+      foto: i.foto_path ? urlStorage(origen, i.foto_path) : undefined,
+      orden: i.orden,
+      destacado: true,
+    })),
+  };
 }
 
-/** Textos y contactos. Con Supabase: la única fila de `configuracion_sitio`. */
+/** Textos, contactos e imágenes: la fila `configuracion_sitio`. */
 export async function getSitio(): Promise<Sitio> {
-  return parsearSitio(sitioJson, resolverImagen);
+  return parsearSitio((await contenido()).configuracion_sitio, resolverImagen);
+}
+
+/** Fotos públicas de la galería. Todavía no se muestran (sección de la fase 6b). */
+export async function getGaleria(): Promise<FotoGaleria[]> {
+  const { origen, galeria } = await contenido();
+  return galeria.map((f) => ({
+    url: urlStorage(origen, f.path),
+    alt: f.alt,
+    credito: f.credito ?? undefined,
+    ancho: f.ancho ?? undefined,
+    alto: f.alto ?? undefined,
+    orden: f.orden,
+  }));
+}
+
+/** Secciones del menú: Comisión solo si hay mesa vigente para mostrar. */
+export async function getSecciones(): Promise<readonly Seccion[]> {
+  const { mesa } = await contenido();
+  return secciones.filter((s) => s.id !== 'comision' || mesa.integrantes.length > 0);
+}
+
+/** true solo en el sitio público de producción: fuera de eso, la página sale con noindex. */
+export async function esSitioPublico(): Promise<boolean> {
+  return esProduccion(variable('CF_PAGES_BRANCH'), (await contenido()).entorno);
 }

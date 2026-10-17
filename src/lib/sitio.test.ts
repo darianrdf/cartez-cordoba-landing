@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import sitioJson from '../data/sitio.json';
+import snapshot from '../data/sitio.json';
+import { contenidoSchema, HOSTS_SUPABASE } from './contenido';
 import { instagramUrl, mailtoUrl, nombreCompleto, parrafos, parsearSitio, whatsappUrl, type FilaSitio } from './sitio';
 
 const filaBase: FilaSitio = {
@@ -30,11 +31,14 @@ const filaBase: FilaSitio = {
   franja_frase: '  Frase de la franja  ',
 };
 
+/** La fila del sitio dentro del snapshot versionado (src/data/sitio.json). */
+const sitioJson = snapshot.configuracion_sitio;
+
 /** Resolver de prueba: devuelve la referencia tal cual. */
 const parsear = (fila: unknown) => parsearSitio(fila, (ref) => ref);
 
 describe('parsearSitio', () => {
-  it('el sitio.json del repo es válido', () => {
+  it('la fila del sitio del snapshot es válida', () => {
     expect(() => parsear(sitioJson)).not.toThrow();
   });
 
@@ -119,7 +123,7 @@ describe('parrafos', () => {
   });
 });
 
-describe('sitio.json del repo', () => {
+describe('textos del snapshot (src/data/sitio.json)', () => {
   const sitio = parsear(sitioJson);
 
   it('tiene los textos reales cargados (sin relleno)', () => {
@@ -161,7 +165,7 @@ describe('imágenes del sitio', () => {
     },
   );
 
-  it('las fotos locales que referencia sitio.json existen', () => {
+  it('las fotos locales que referencia el snapshot existen', () => {
     const refs = [sitioJson.hero_imagen_escritorio, sitioJson.hero_imagen_celular, sitioJson.franja_imagen];
     for (const ref of refs.filter((r) => !r.startsWith('https://'))) {
       expect(existsSync(new URL(`../assets/fotos/${ref}`, import.meta.url)), ref).toBe(true);
@@ -186,5 +190,33 @@ describe('URLs de contacto', () => {
 
   it('Mail', () => {
     expect(mailtoUrl('comisioncordobaateneocartez@gmail.com')).toBe('mailto:comisioncordobaateneocartez@gmail.com');
+  });
+});
+
+describe('snapshot versionado (src/data/sitio.json)', () => {
+  const contenido = contenidoSchema.parse(snapshot);
+
+  it('cumple el contrato version 1 de contenido_landing()', () => {
+    expect(contenido.version).toBe(1);
+    expect(Object.keys(snapshot).sort()).toEqual(
+      ['configuracion_sitio', 'entorno', 'galeria', 'generado_en', 'mesa', 'origen', 'version'],
+    );
+  });
+
+  it('es de producción: el sitio público nunca cae a datos de prueba', () => {
+    expect(contenido.entorno).toBe('prod');
+    expect(new URL(contenido.origen).host).toBe(HOSTS_SUPABASE[0]);
+  });
+
+  it('la mesa trae solo nombre, cargo, orden y foto (nunca datos personales)', () => {
+    expect(snapshot.mesa.integrantes.length).toBeGreaterThan(0);
+    for (const integrante of snapshot.mesa.integrantes) {
+      expect(Object.keys(integrante).sort()).toEqual(['cargo', 'foto_path', 'nombre', 'orden']);
+    }
+    expect(contenido.mesa.etapa).toBeTruthy();
+  });
+
+  it('la galería es una lista válida (vacía hasta la fase 6b)', () => {
+    expect(Array.isArray(contenido.galeria)).toBe(true);
   });
 });

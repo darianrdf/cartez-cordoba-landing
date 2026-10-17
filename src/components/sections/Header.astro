@@ -1,12 +1,12 @@
 ---
 import { Image } from 'astro:assets';
 import logoHorizontal from '@/assets/logos/logo-horizontal.png';
-import { secciones } from '@/data/navegacion';
-import { getSitio } from '@/lib/data';
+import { getSecciones, getSitio } from '@/lib/data';
 import { nombreCompleto } from '@/lib/sitio';
 import { cn } from '@/lib/utils';
 
 const sitio = await getSitio();
+const secciones = await getSecciones();
 
 const claseLink =
   'relative block rounded-md px-3 py-3 text-base font-medium text-navy md:py-2 md:text-sm ' +

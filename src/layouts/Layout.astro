@@ -9,10 +9,12 @@ import frauncesSemibold from '@fontsource/fraunces/files/fraunces-latin-600-norm
 import '@/styles/global.css';
 import { getImage } from 'astro:assets';
 import logoRedondo from '@/assets/logos/logo-redondo.png';
-import { getSitio } from '@/lib/data';
+import { esSitioPublico, getSitio } from '@/lib/data';
 import { nombreCompleto } from '@/lib/sitio';
 
 const sitio = await getSitio();
+// El preview (rama dev, datos de prueba) y cualquier build que no sea producción no se indexan.
+const indexable = await esSitioPublico();
 
 // Favicons generados en el build a partir del logo redondo (cuadrados, sin recortar)
 const opcionesIcono = { src: logoRedondo, format: 'png', fit: 'contain', background: 'transparent' } as const;
@@ -47,6 +49,7 @@ const imagenOG = new URL('/og.png', Astro.site);
 
     <title>{titulo}</title>
     <meta name="description" content={descripcion} />
+    {!indexable && <meta name="robots" content="noindex, nofollow" />}
     <meta name="theme-color" content="#ffffff" />
 
     <meta property="og:type" content="website" />

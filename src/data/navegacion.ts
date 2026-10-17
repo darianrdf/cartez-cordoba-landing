@@ -4,3 +4,5 @@ export const secciones = [
   { id: 'comision', etiqueta: 'Comisión' },
   { id: 'contacto', etiqueta: 'Sumate' },
 ] as const;
+
+export type Seccion = (typeof secciones)[number];

@@ -33,15 +33,26 @@ export interface Evento {
 export interface Miembro {
   cargo: string;
   nombre: string;
-  /** Ruta dentro de public/ o URL externa. Si falta, se muestran las iniciales. */
+  /** URL de Supabase Storage (se optimiza en el build). Si falta, se muestran las iniciales. */
   foto?: string;
   orden: number;
   destacado: boolean;
 }
 
 export interface Comision {
-  etapa: string;
+  /** Etapa de la mesa vigente (ej. "2026"). Falta si no hay mesa vigente. */
+  etapa?: string;
   miembros: Miembro[];
+}
+
+/** Foto pública de la galería (fase 6b: todavía no se muestra). */
+export interface FotoGaleria {
+  url: string;
+  alt: string;
+  credito?: string;
+  ancho?: number;
+  alto?: number;
+  orden: number;
 }
 
 export interface BloqueTexto {

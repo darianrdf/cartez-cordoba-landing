@@ -11,10 +11,15 @@ Sitio 100% estático, mobile-first (el tráfico llega desde Instagram en celular
 
 ## Acceso a datos
 
-- Eventos, comisión y contenido del sitio se leen **solo** a través de `src/lib/data.ts` (`getEventos()`, `getComision()`, `getSitio()`). Los componentes nunca importan `astro:content` ni los JSON de `src/data/`.
+- Eventos, comisión, galería y contenido del sitio se leen **solo** a través de `src/lib/data.ts` (`getEventos()`, `getComision()`, `getSitio()`, `getGaleria()`, `getSecciones()`, `esSitioPublico()`). Los componentes nunca importan `astro:content`, los JSON de `src/data/` ni `contenido.ts`.
 - `data.ts` convierte la fuente a los tipos de dominio de `src/lib/tipos.ts`. Esos tipos no deben depender de la fuente.
-- Fuente actual: Content Collection (`src/content/eventos/*.md`, schema en `src/content.config.ts`) y `src/data/comision.json`. **Fuente futura: Supabase.** La migración debe tocar solo `data.ts`. Las fotos y flyers vendrán como URL de Supabase Storage, por eso `foto` y `flyer` aceptan URL externa.
-- Textos y contactos: `getSitio()`. Fuente actual `src/data/sitio.json`, plano y en snake_case, que mapea 1:1 a la futura tabla `configuracion_sitio` (una sola fila). `src/lib/sitio.ts` es puro: valida la fila y la convierte al tipo `Sitio` (`parsearSitio`), y arma las URLs de contacto.
+- **Sitio y comisión vienen de Supabase, leídos en el build** (D-20 del dashboard): `src/lib/contenido.ts` (puro) llama a `contenido_landing()` con `SUPABASE_URL` y `SUPABASE_ANON_KEY` (variables del build, sin `PUBLIC_`), valida el contrato `version` 1 con zod y, si falla o tarda más de `CONTENIDO_TIMEOUT_MS` (10 s), usa el snapshot `src/data/sitio.json` con un `console.warn('[contenido] ⚠ …')`. El build nunca se rompe por la red. `data.ts` cachea la promesa: una sola lectura por build. **Nunca** leer Supabase desde el navegador.
+- El snapshot `src/data/sitio.json` es la salida de la función más `origen`, siempre de **producción** (lo verifica `sitio.test.ts`). Se actualiza a mano con `npm run snapshot` y commit; nunca con commits automáticos.
+- La función devuelve rutas de Storage (`foto_path`, `path`), no URLs: `urlStorage(origen, ruta)` las arma. Las imágenes remotas solo pueden ser de cartez-prod o cartez-dev: `HOSTS_SUPABASE` en `contenido.ts` y `image.remotePatterns` en `astro.config.mjs` (mantener ambos iguales). Se optimizan en el build con `astro:assets`.
+- Un campo nuevo del dashboard se agrega a propósito en los dos repos: `contenido_landing()`, `tests/fixtures/contrato-landing.json` del dashboard y `contenidoSchema` de acá. Las claves desconocidas se descartan.
+- Eventos: Content Collection (`src/content/eventos/*.md`, schema en `src/content.config.ts`) hasta que exista el módulo de eventos del dashboard. Galería: `getGaleria()` existe, pero ninguna sección la muestra todavía (fase 6b).
+- Textos y contactos: `getSitio()`, sobre `configuracion_sitio` (una sola fila, snake_case). `src/lib/sitio.ts` es puro: valida la fila y la convierte al tipo `Sitio` (`parsearSitio`), y arma las URLs de contacto.
+- `noindex` fuera de producción: `esSitioPublico()` (`src/lib/entorno.ts`) exige `CF_PAGES_BRANCH === 'main'` **y** datos de prod.
 - Los medios de contacto son opcionales. Un componente nunca debe asumir que existen: si falta el dato, no se renderiza el botón o link.
 - Todo contenido editable (textos, contactos, eventos, comisión) pasa por `data.ts`. Nada de texto editable hardcodeado en componentes: en el futuro se edita desde un dashboard.
 

@@ -1,4 +1,5 @@
 ---
+import { Image } from 'astro:assets';
 import { filasDestacadas, iniciales } from '@/lib/comision';
 import { getComision } from '@/lib/data';
 
@@ -9,51 +10,58 @@ const filas = filasDestacadas(comision.miembros);
 const claseFoto = 'aspect-square w-full rounded-lg ring-2 ring-gold/60 ring-offset-4 ring-offset-white';
 ---
 
-<section id="comision" aria-labelledby="comision-titulo" class="bg-white">
-  <div class="mx-auto max-w-6xl space-y-14 px-4 py-20 md:py-28">
-    <div class="space-y-3 text-center">
-      <h2 id="comision-titulo" class="titulo-seccion centrado">La Comisión</h2>
-      <p class="text-lg text-navy-muted">Etapa {comision.etapa}</p>
-    </div>
+{
+  // Sin mesa vigente la sección no se muestra (y el menú no la lista: getSecciones()).
+  filas.length > 0 && (
+    <section id="comision" aria-labelledby="comision-titulo" class="bg-white">
+      <div class="mx-auto max-w-6xl space-y-14 px-4 py-20 md:py-28">
+        <div class="space-y-3 text-center">
+          <h2 id="comision-titulo" class="titulo-seccion centrado">
+            La Comisión
+          </h2>
+          {comision.etapa && <p class="text-lg text-navy-muted">Etapa {comision.etapa}</p>}
+        </div>
 
-    <div class="space-y-10">
-      {
-        filas.map((fila) => (
-          <ul class="flex flex-wrap justify-center gap-x-6 gap-y-10 md:gap-x-10">
-            {fila.map(({ nombre, cargo, foto }) => (
-              <li class="aparecer w-[calc(50%-0.75rem)] max-w-56 sm:w-52">
-                <article class="flex flex-col items-center gap-4 text-center">
-                  {foto ? (
-                    <img
-                      src={foto}
-                      alt={`Foto de ${nombre}`}
-                      width="320"
-                      height="320"
-                      loading="lazy"
-                      decoding="async"
-                      class:list={[claseFoto, 'bg-tint-gold object-cover']}
-                    />
-                  ) : (
-                    <span
-                      aria-hidden="true"
-                      class:list={[
-                        claseFoto,
-                        'flex items-center justify-center bg-tint-gold font-display text-4xl font-semibold text-navy md:text-5xl',
-                      ]}
-                    >
-                      {iniciales(nombre)}
-                    </span>
-                  )}
-                  <div class="space-y-1">
-                    <h3 class="font-sans text-lg leading-snug font-medium text-navy">{nombre}</h3>
-                    <p class="text-sm text-navy-muted">{cargo}</p>
-                  </div>
-                </article>
-              </li>
-            ))}
-          </ul>
-        ))
-      }
-    </div>
-  </div>
-</section>
+        <div class="space-y-10">
+          {filas.map((fila) => (
+            <ul class="flex flex-wrap justify-center gap-x-6 gap-y-10 md:gap-x-10">
+              {fila.map(({ nombre, cargo, foto }) => (
+                <li class="aparecer w-[calc(50%-0.75rem)] max-w-56 sm:w-52">
+                  <article class="flex flex-col items-center gap-4 text-center">
+                    {foto ? (
+                      // Foto de Supabase Storage, recortada y optimizada en el build.
+                      <Image
+                        src={foto}
+                        alt={`Foto de ${nombre}`}
+                        width={224}
+                        height={224}
+                        densities={[1, 2]}
+                        fit="cover"
+                        quality={70}
+                        class:list={[claseFoto, 'bg-tint-gold object-cover']}
+                      />
+                    ) : (
+                      <span
+                        aria-hidden="true"
+                        class:list={[
+                          claseFoto,
+                          'flex items-center justify-center bg-tint-gold font-display text-4xl font-semibold text-navy md:text-5xl',
+                        ]}
+                      >
+                        {iniciales(nombre)}
+                      </span>
+                    )}
+                    <div class="space-y-1">
+                      <h3 class="font-sans text-lg leading-snug font-medium text-navy">{nombre}</h3>
+                      <p class="text-sm text-navy-muted">{cargo}</p>
+                    </div>
+                  </article>
+                </li>
+              ))}
+            </ul>
+          ))}
+        </div>
+      </div>
+    </section>
+  )
+}
