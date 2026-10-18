@@ -86,7 +86,7 @@ El sitio se publica en https://ateneo-cartez-cordoba.pages.dev (configurado como
 | `dev` | https://dev.ateneo-cartez-cordoba.pages.dev (preview fijo) | cartez-dev | no (`noindex`) |
 | otras | URL de preview de cada deploy | cartez-dev | no (`noindex`) |
 
-- Variables en Cloudflare (Settings → Variables and secrets): `SUPABASE_URL` y `SUPABASE_ANON_KEY`, con valores de cartez-prod en **Production** y de cartez-dev en **Preview**, más `NODE_VERSION=24` en los dos.
+- Variables en Cloudflare (Settings → Variables and secrets): `SUPABASE_URL` y `SUPABASE_ANON_KEY`, con valores de cartez-prod en **Production** y de cartez-dev en **Preview**, más `NODE_VERSION=22` en los dos.
 - La página sale con `<meta name="robots" content="noindex, nofollow">` salvo que se construya la rama `main` **y** los datos sean de prod (`src/lib/entorno.ts`). Así un preview con datos de prueba nunca se indexa.
 - Deploy Hooks: `publicar-prod` (rama `main`) y `publicar-dev` (rama `dev`). Sus URLs son secretas: solo están en los secrets de Supabase (`DEPLOY_HOOK_URL` de la Edge Function `publicar-landing`) y de GitHub (`CLOUDFLARE_DEPLOY_HOOK_PROD`).
 
