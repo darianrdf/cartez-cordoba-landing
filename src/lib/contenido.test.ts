@@ -1,9 +1,30 @@
 import { describe, expect, it, vi } from 'vitest';
 import snapshot from '../data/sitio.json';
-import { contenidoSchema, mismoContenido, obtenerContenido, urlStorage, type OpcionesContenido } from './contenido';
+import {
+  contenidoSchema,
+  eventosValidos,
+  mismoContenido,
+  obtenerContenido,
+  urlStorage,
+  type OpcionesContenido,
+} from './contenido';
 
 const PROD = 'https://ymxtvtzzkqdngsavuigl.supabase.co';
 const DEV = 'https://gaibxlhpjeslqyyfkoho.supabase.co';
+
+/** Un evento como lo devuelve contenido_landing(). */
+const EVENTO = {
+  id: '6f1c2a4e-8b3d-4c5e-9f7a-1b2c3d4e5f60',
+  titulo: 'Expo Rural',
+  fecha: '2026-11-10',
+  fecha_fin: '2026-11-12',
+  lugar: 'Predio ferial',
+  categoria: 'rural',
+  organizador: 'externo',
+  link: 'https://expo.example.com',
+  descripcion: null,
+  flyer_path: 'eventos/2026/10/6f1c2a4e.webp',
+};
 
 /** Lo que devuelve contenido_landing() (sin `origen`, que lo agrega la landing). */
 function respuestaDe(cambios: Record<string, unknown> = {}) {
@@ -118,6 +139,15 @@ describe('obtenerContenido', () => {
       await caeAlSnapshot({ fetch }, /la API respondió 500/);
     });
 
+    it('falta la lista de eventos, o no es una lista', async () => {
+      const { eventos: _, ...sinEventos } = respuestaDe();
+      await caeAlSnapshot({ fetch: vi.fn(async () => respuestaHttp(sinEventos)) }, /respuesta inválida en eventos/);
+      await caeAlSnapshot(
+        { fetch: vi.fn(async () => respuestaHttp(respuestaDe({ eventos: { 0: EVENTO } }))) },
+        /respuesta inválida en eventos/,
+      );
+    });
+
     it('la respuesta no cumple el contrato', async () => {
       const fetch = vi.fn(async () => respuestaHttp(respuestaDe({ version: 2 })));
       await caeAlSnapshot({ fetch }, /respuesta inválida en version/);
@@ -142,16 +172,67 @@ describe('obtenerContenido', () => {
   });
 });
 
+describe('eventos', () => {
+  it('trae los eventos válidos de la respuesta', async () => {
+    const fetch = vi.fn(async () => respuestaHttp(respuestaDe({ eventos: [EVENTO] })));
+    const { log, opciones: o } = opciones({ fetch });
+    const contenido = await obtenerContenido(o);
+    expect(contenido.eventos).toEqual([EVENTO]);
+    expect(log.warn).not.toHaveBeenCalled();
+    expect(log.info).toHaveBeenCalledWith(expect.stringContaining('1 eventos'));
+  });
+
+  it('descarta solo los eventos inválidos, con un aviso cada uno, y usa los demás', async () => {
+    const malos = [
+      { ...EVENTO, id: '11111111-1111-4111-8111-111111111111', categoria: 'fiesta' },
+      { ...EVENTO, id: '22222222-2222-4222-8222-222222222222', fecha_fin: '2026-11-09' },
+      { ...EVENTO, id: undefined },
+      { ...EVENTO, id: '33333333-3333-4333-8333-333333333333', flyer_path: 'galeria/../x.webp' },
+    ];
+    const fetch = vi.fn(async () => respuestaHttp(respuestaDe({ eventos: [malos[0], EVENTO, ...malos.slice(1)] })));
+    const { log, opciones: o } = opciones({ fetch });
+    const contenido = await obtenerContenido(o);
+
+    expect(contenido.origen).toBe(DEV);
+    expect(contenido.eventos).toEqual([EVENTO]);
+    const avisos = log.warn.mock.calls.map(([texto]) => texto as string);
+    expect(avisos).toHaveLength(4);
+    for (const aviso of avisos) expect(aviso.startsWith('[contenido] evento descartado: ')).toBe(true);
+    expect(avisos[0]).toContain('descartado: 11111111-1111-4111-8111-111111111111 (categoria: ');
+    expect(avisos[1]).toContain('22222222-2222-4222-8222-222222222222 (fecha_fin: fecha_fin es anterior a fecha)');
+    // Un id undefined no sobrevive al JSON de la respuesta: la fila llega sin id.
+    expect(avisos[2]).toContain('descartado: (sin id) (id: ');
+    expect(avisos[3]).toContain('33333333-3333-4333-8333-333333333333 (flyer_path: ');
+    // No cayó al snapshot.
+    expect(avisos.some((a) => a.includes('No se pudo leer Supabase'))).toBe(false);
+    expect(log.info).toHaveBeenCalledWith(expect.stringContaining('[contenido] Supabase OK (dev)'));
+  });
+
+  it('eventosValidos() avisa con "(sin id)" si la fila ni siquiera es un objeto', () => {
+    const log = { warn: vi.fn() };
+    expect(eventosValidos([null, 'texto', EVENTO], log)).toEqual([EVENTO]);
+    expect(log.warn).toHaveBeenCalledTimes(2);
+    expect(String(log.warn.mock.calls[0]![0]).startsWith('[contenido] evento descartado: (sin id) (')).toBe(true);
+  });
+});
+
 describe('urlStorage', () => {
-  it('arma la URL pública del bucket galeria', () => {
-    expect(urlStorage(PROD, 'mesa/2026/ana.webp')).toBe(
+  it('arma la URL pública del bucket galeria (mesa)', () => {
+    expect(urlStorage(PROD, 'galeria', 'mesa/2026/ana.webp')).toBe(
       `${PROD}/storage/v1/object/public/galeria/mesa/2026/ana.webp`,
+    );
+  });
+
+  it('arma la URL pública del bucket landing (flyers)', () => {
+    expect(urlStorage(DEV, 'landing', 'eventos/2026/10/x.webp')).toBe(
+      `${DEV}/storage/v1/object/public/landing/eventos/2026/10/x.webp`,
     );
   });
 });
 
 describe('mismoContenido', () => {
-  const base = contenidoSchema.parse(snapshot);
+  const crudo = contenidoSchema.parse(snapshot);
+  const base = { ...crudo, eventos: eventosValidos(crudo.eventos, { warn: vi.fn() }) };
   it('ignora la fecha de generación', () => {
     expect(mismoContenido(base, { ...base, generado_en: 'otra' })).toBe(true);
   });

@@ -3,14 +3,17 @@
  * navegador del visitante). Módulo puro (sin Astro): lo usan data.ts, scripts/snapshot.mjs y los tests.
  *
  * - Fuente: `public.contenido_landing()` de Supabase, la única función que la clave pública
- *   (anon) puede ejecutar. Contrato `version` 1 (ver dashboard-cartez, D-20).
+ *   (anon) puede ejecutar. Contrato `version` 1 (ver dashboard-cartez, D-20 y D-23).
  * - Si la lectura falla, tarda más de `timeoutMs` o la respuesta no valida, se usa el snapshot
  *   versionado (src/data/sitio.json) y se deja un aviso en el log: el build nunca se rompe por esto.
- * - La función devuelve rutas de Storage (`foto_path`), no URLs: la URL se arma con `origen`,
- *   que el snapshot también guarda.
+ * - La función devuelve rutas de Storage (`foto_path`, `flyer_path`), no URLs: la URL se arma con
+ *   `origen`, que el snapshot también guarda.
+ * - Los eventos se validan uno por uno: uno inválido se descarta con un aviso y el resto se usa.
+ *   Solo si falta la lista entera (o no es una lista) se cae al snapshot.
  */
 import { z } from 'astro/zod';
 import { filaSitioSchema } from './sitio';
+import { CATEGORIAS, ORGANIZADORES } from './tipos';
 
 /** Proyectos de Supabase de los que se acepta contenido (cartez-prod y cartez-dev). */
 export const HOSTS_SUPABASE = ['ymxtvtzzkqdngsavuigl.supabase.co', 'gaibxlhpjeslqyyfkoho.supabase.co'] as const;
@@ -20,6 +23,11 @@ export const TIMEOUT_POR_DEFECTO_MS = 10_000;
 
 /** Ruta dentro de un bucket: la misma regla que el check de la base. */
 const rutaStorage = z.string().regex(/^[A-Za-z0-9/_.-]+\.(webp|jpe?g|png)$/);
+
+/** Flyer de un evento: WebP dentro de eventos/ del bucket landing (la misma regla que la base). */
+const rutaFlyer = z.string().regex(/^eventos\/([A-Za-z0-9_-]+\/)*[A-Za-z0-9_-]+\.webp$/);
+
+const fechaCivil = z.string().regex(/^\d{4}-\d{2}-\d{2}$/);
 
 const origenSchema = z.string().refine((url) => {
   if (!URL.canParse(url)) return false;
@@ -43,6 +51,24 @@ const fotoGaleriaSchema = z.object({
   orden: z.number().int(),
 });
 
+/** Un evento publicado. Se valida por separado (ver eventosValidos). */
+export const eventoSchema = z
+  .object({
+    id: z.uuid(),
+    titulo: z.string().trim().min(1),
+    fecha: fechaCivil,
+    fecha_fin: fechaCivil,
+    lugar: z.string().trim().min(1),
+    categoria: z.enum(CATEGORIAS),
+    organizador: z.enum(ORGANIZADORES),
+    link: z.url().nullable(),
+    descripcion: z.string().nullable(),
+    flyer_path: rutaFlyer.nullable(),
+  })
+  .refine((e) => e.fecha_fin >= e.fecha, { message: 'fecha_fin es anterior a fecha', path: ['fecha_fin'] });
+
+export type FilaEvento = z.output<typeof eventoSchema>;
+
 /** Lo que devuelve contenido_landing() más `origen`. Las claves de más se descartan. */
 export const contenidoSchema = z.object({
   origen: origenSchema,
@@ -55,13 +81,34 @@ export const contenidoSchema = z.object({
     etapa: z.string().nullable(),
     integrantes: z.array(integranteSchema),
   }),
+  /** Cada uno se valida después, por separado: acá solo se exige que sea una lista. */
+  eventos: z.array(z.unknown()),
 });
 
-export type Contenido = z.output<typeof contenidoSchema>;
+export type Contenido = Omit<z.output<typeof contenidoSchema>, 'eventos'> & { eventos: FilaEvento[] };
 
-/** URL pública de un archivo del bucket galeria del proyecto `origen`. */
-export function urlStorage(origen: string, ruta: string): string {
-  return `${origen}/storage/v1/object/public/galeria/${ruta}`;
+/** Valida cada evento: uno inválido se descarta con un aviso en el log y el resto sigue. */
+export function eventosValidos(filas: readonly unknown[], log: Pick<Console, 'warn'>): FilaEvento[] {
+  return filas.flatMap((fila) => {
+    const resultado = eventoSchema.safeParse(fila);
+    if (resultado.success) return [resultado.data];
+    const id = fila && typeof fila === 'object' && 'id' in fila ? String(fila.id) : '(sin id)';
+    const problema = resultado.error.issues[0];
+    log.warn(`[contenido] evento descartado: ${id} (${problema?.path.join('.') || 'evento'}: ${problema?.message})`);
+    return [];
+  });
+}
+
+function conEventosValidos(crudo: z.output<typeof contenidoSchema>, log: Pick<Console, 'warn'>): Contenido {
+  return { ...crudo, eventos: eventosValidos(crudo.eventos, log) };
+}
+
+/** Buckets públicos de los que la landing toma imágenes (ver image.remotePatterns). */
+export type BucketPublico = 'galeria' | 'landing';
+
+/** URL pública de un archivo de un bucket público del proyecto `origen`. */
+export function urlStorage(origen: string, bucket: BucketPublico, ruta: string): string {
+  return `${origen}/storage/v1/object/public/${bucket}/${ruta}`;
 }
 
 /** Mismo contenido, sin contar cuándo se generó. */
@@ -86,13 +133,13 @@ export interface OpcionesContenido {
 export async function obtenerContenido(opciones: OpcionesContenido): Promise<Contenido> {
   const { url, clave, timeoutMs = TIMEOUT_POR_DEFECTO_MS, fetch: f = fetch, log = console } = opciones;
   // Un snapshot versionado inválido es un error de código: lo atajan los tests (sitio.test.ts).
-  const snapshot = contenidoSchema.parse(opciones.snapshot);
+  const snapshotCrudo = contenidoSchema.parse(opciones.snapshot);
 
   const usarSnapshot = (motivo: string): Contenido => {
     log.warn(
-      `[contenido] ⚠ No se pudo leer Supabase (${motivo}). Se usa el snapshot del ${snapshot.generado_en} (${snapshot.entorno}).`,
+      `[contenido] ⚠ No se pudo leer Supabase (${motivo}). Se usa el snapshot del ${snapshotCrudo.generado_en} (${snapshotCrudo.entorno}).`,
     );
-    return snapshot;
+    return conEventosValidos(snapshotCrudo, log);
   };
 
   if (!url?.trim() || !clave?.trim()) return usarSnapshot('faltan SUPABASE_URL o SUPABASE_ANON_KEY');
@@ -128,16 +175,16 @@ export async function obtenerContenido(opciones: OpcionesContenido): Promise<Con
       const problema = resultado.error.issues[0];
       return usarSnapshot(`respuesta inválida en ${problema?.path.join('.') || 'la raíz'}: ${problema?.message}`);
     }
-    const vivo = resultado.data;
+    const vivo = conEventosValidos(resultado.data, log);
     const comparacion =
-      vivo.entorno !== snapshot.entorno
-        ? `snapshot de ${snapshot.entorno}, no se compara`
-        : mismoContenido(vivo, snapshot)
+      vivo.entorno !== snapshotCrudo.entorno
+        ? `snapshot de ${snapshotCrudo.entorno}, no se compara`
+        : mismoContenido(vivo, conEventosValidos(snapshotCrudo, { warn: () => undefined }))
           ? 'snapshot al día'
           : '⚠ el snapshot versionado difiere: corré npm run snapshot y commitealo';
     log.info(
       `[contenido] Supabase OK (${vivo.entorno}): ${vivo.mesa.integrantes.length} integrantes de la mesa, ` +
-        `${vivo.galeria.length} fotos · ${comparacion}`,
+        `${vivo.galeria.length} fotos, ${vivo.eventos.length} eventos · ${comparacion}`,
     );
     return vivo;
   } catch (error) {

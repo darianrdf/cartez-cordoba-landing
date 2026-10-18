@@ -1,16 +1,13 @@
 /**
  * Capa de acceso a datos. ÚNICO lugar que conoce de dónde salen eventos, comisión y
- * contenido del sitio.
- * - Sitio y comisión: Supabase (`contenido_landing()`), leído una sola vez por build en
- *   src/lib/contenido.ts, con el snapshot src/data/sitio.json si la lectura falla.
- * - Eventos: Content Collection de Astro (src/content/eventos) hasta que exista el módulo de
- *   eventos del dashboard.
+ * contenido del sitio: Supabase (`contenido_landing()`), leído una sola vez por build en
+ * src/lib/contenido.ts, con el snapshot src/data/sitio.json si la lectura falla. Los eventos se
+ * cargan en el dashboard (sección Eventos, D-23).
  */
-import { getCollection } from 'astro:content';
 import snapshot from '@/data/sitio.json';
 import { obtenerContenido, TIMEOUT_POR_DEFECTO_MS, urlStorage, type Contenido } from '@/lib/contenido';
 import { esProduccion } from '@/lib/entorno';
-import { estadoEvento, normalizarFecha } from '@/lib/fechas';
+import { eventosDeContenido } from '@/lib/eventos';
 import { parsearSitio } from '@/lib/sitio';
 import type { Comision, Evento, FotoGaleria, Imagen, Sitio } from '@/lib/tipos';
 import { secciones, type Seccion } from '@/data/navegacion';
@@ -56,24 +53,8 @@ function contenido(): Promise<Contenido> {
  * Se evalúa en el build; el navegador vuelve a filtrar al cargar (ver Eventos.astro).
  */
 export async function getEventos(ahora: Date = new Date()): Promise<Evento[]> {
-  const entradas = await getCollection('eventos');
-
-  return entradas
-    .map(({ id, data, body }): Evento => ({
-      id,
-      titulo: data.titulo,
-      fecha: normalizarFecha(data.fecha),
-      fechaFin: normalizarFecha(data.fechaFin ?? data.fecha),
-      lugar: data.lugar,
-      categoria: data.categoria,
-      organizador: data.organizador,
-      link: data.link,
-      imagen: data.imagen,
-      flyer: data.flyer,
-      descripcion: body?.trim() || undefined,
-    }))
-    .filter((evento) => estadoEvento(evento, ahora) !== 'vencido')
-    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.fechaFin.localeCompare(b.fechaFin));
+  const { origen, eventos } = await contenido();
+  return eventosDeContenido(origen, eventos, ahora);
 }
 
 /** Mesa vigente. La función ya filtra los cargos que se muestran en la landing. */
@@ -84,7 +65,7 @@ export async function getComision(): Promise<Comision> {
     miembros: mesa.integrantes.map((i) => ({
       cargo: i.cargo,
       nombre: i.nombre,
-      foto: i.foto_path ? urlStorage(origen, i.foto_path) : undefined,
+      foto: i.foto_path ? urlStorage(origen, 'galeria', i.foto_path) : undefined,
       orden: i.orden,
       destacado: true,
     })),
@@ -100,7 +81,7 @@ export async function getSitio(): Promise<Sitio> {
 export async function getGaleria(): Promise<FotoGaleria[]> {
   const { origen, galeria } = await contenido();
   return galeria.map((f) => ({
-    url: urlStorage(origen, f.path),
+    url: urlStorage(origen, 'galeria', f.path),
     alt: f.alt,
     credito: f.credito ?? undefined,
     ancho: f.ancho ?? undefined,

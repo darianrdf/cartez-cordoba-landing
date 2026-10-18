@@ -22,59 +22,33 @@ Para leer el contenido de Supabase en local, copiar `.env.example` a `.env` y co
 
 ## De dónde sale el contenido
 
-**Textos, contactos, imágenes del sitio y la mesa (sección Comisión) se editan en el dashboard** (secciones Sitio web y Mesa), no en este repo. Después de guardar, alguien de la mesa toca **«Publicar cambios»** y Cloudflare vuelve a armar el sitio en unos 3 minutos. Además, el sitio se reconstruye solo todos los días a las 9 (ver `docs/OPERACION.md` del dashboard, sección 10).
+**Textos, contactos, imágenes del sitio, la mesa (sección Comisión) y los eventos se editan en el dashboard** (secciones Sitio web, Mesa y Eventos), no en este repo. Después de guardar, alguien de la mesa toca **«Publicar cambios»** y Cloudflare vuelve a armar el sitio en unos 3 minutos. Además, el sitio se reconstruye solo todos los días a las 9 (ver `docs/OPERACION.md` del dashboard, sección 10).
 
-Cómo funciona (D-20 del dashboard):
+Cómo funciona (D-20 y D-23 del dashboard):
 
 - En el **build** (nunca en el navegador del visitante), `src/lib/contenido.ts` llama a la función pública `contenido_landing()` de Supabase con la clave pública. Es lo único que esa clave puede leer de la base.
 - Si la lectura falla o tarda más de 10 segundos (`CONTENIDO_TIMEOUT_MS`), el build **no se rompe**: usa el **snapshot** versionado `src/data/sitio.json` y deja en el log `[contenido] ⚠ No se pudo leer Supabase (motivo)`. Si salió bien, deja `[contenido] Supabase OK (prod): …`.
 - El snapshot no se actualiza solo. Cuando el log dice `el snapshot versionado difiere`, correr `npm run snapshot` (con el `.env` de **producción**), revisar el diff, `npm test` y commitear. También sirve el artifact `contenido-landing-prod` del workflow diario del dashboard, que tiene el mismo formato.
-- Las fotos de la mesa vienen de Supabase Storage: se descargan y optimizan en el build (`astro:assets`). El visitante nunca le pide nada a Supabase. Solo se aceptan los dos proyectos (`image.remotePatterns` en `astro.config.mjs` y `HOSTS_SUPABASE` en `src/lib/contenido.ts`).
+- Las fotos de la mesa (bucket `galeria`) y los flyers de los eventos (bucket `landing`) vienen de Supabase Storage: se descargan y optimizan en el build (`astro:assets`). El visitante nunca le pide nada a Supabase. Solo se aceptan los dos proyectos y esos dos buckets (`image.remotePatterns` en `astro.config.mjs` y `HOSTS_SUPABASE` en `src/lib/contenido.ts`).
+- Cada evento se valida por separado: si uno no cumple el contrato, se descarta con `[contenido] evento descartado: <id> (<motivo>)` en el log y los demás se muestran. Solo si falta la lista de eventos entera se usa el snapshot.
 - Si no hay mesa vigente, la sección Comisión y su ítem del menú no se muestran.
 - La galería todavía no se muestra (fase 6b del dashboard): `getGaleria()` ya existe, pero ninguna sección la usa.
 
 En `sitio.json`, `configuracion_sitio` es la fila del dashboard. Las imágenes se indican con el nombre de un archivo de `src/assets/fotos/` (ej. `franja-cultivo-girasoles.jpg`) o con una URL `https://` de Supabase. Los medios de contacto son opcionales: si quedan vacíos, su botón no se muestra.
 
-## Agregar un evento
+## Eventos
 
-Los eventos todavía se cargan acá, hasta que exista el módulo de eventos del dashboard. Crear un `.md` en `src/content/eventos/` (por ejemplo `2027-03-expo.md`).
+Los eventos se cargan en el dashboard, sección **Eventos** (solo la mesa): nombre, fecha (y "hasta", si dura varios días), lugar, tipo (rural, congreso, charla, visita, peña o actividad), quién lo organiza, link y descripción opcionales, y un flyer opcional. Aparecen en la página los que están marcados **«Mostrar en la página»**, después de tocar **«Publicar cambios»**. Ver `docs/OPERACION.md` del dashboard.
 
-**De un día:**
+- La tarjeta usa el flyer y, si no hay, la foto de la categoría (`src/lib/fotos.ts`).
+- `contenido_landing()` devuelve solo los publicados, no dados de baja y no vencidos; `src/lib/eventos.ts` (`eventosDeContenido`) los convierte al tipo `Evento` y vuelve a filtrar los vencidos.
 
-```md
----
-titulo: Charla de mercados
-fecha: 2027-03-10
-lugar: Sede de la Comisión, Córdoba
-categoria: charla       # rural | congreso | charla | visita | peña | actividad
-organizador: propio     # propio | externo
-link: https://...       # opcional
-imagen: ./charla.jpg    # opcional: foto de la tarjeta (al lado del .md, o URL https)
-flyer: ./flyer.jpg      # opcional
----
-
-Descripción corta (opcional).
-```
-
-**De varios días:** agregar `fechaFin` con el último día.
-
-```md
----
-titulo: Expo Agro
-fecha: 2027-03-10
-fechaFin: 2027-03-12
-lugar: Predio ferial, Córdoba
-categoria: rural
-organizador: externo
----
-```
-
-Las fechas van en formato `AAAA-MM-DD`, sin hora. Cómo se muestran:
+Cómo se muestran:
 
 - Se ordenan por fecha de inicio. Formato: `10 mar` (un día), `10–12 mar` (mismo mes), `30 mar – 2 abr` (distinto mes), `30 dic 2026 – 2 ene 2027` (distinto año).
 - Un evento de un día lleva la etiqueta **Hoy** ese día. Uno de varios días lleva **En curso** entre el primer y el último día.
 - Un evento deja de mostrarse a las **23:00 (hora de Córdoba) del último día**.
-- Los eventos vencidos no se incluyen al compilar. Además, la página oculta al cargar los que vencieron después del último build, así que no hace falta recompilar para sacarlos. Sí hace falta compilar y publicar para que aparezca un evento nuevo.
+- Los eventos vencidos no se incluyen al compilar. Además, la página oculta al cargar los que vencieron después del último build, así que no hace falta recompilar para sacarlos. Sí hace falta publicar (o esperar la reconstrucción diaria de las 9, hora de Córdoba) para que aparezca un evento nuevo.
 
 ## Publicación
 

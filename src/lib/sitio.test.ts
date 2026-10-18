@@ -1,7 +1,7 @@
 import { existsSync } from 'node:fs';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import snapshot from '../data/sitio.json';
-import { contenidoSchema, HOSTS_SUPABASE } from './contenido';
+import { contenidoSchema, eventosValidos, HOSTS_SUPABASE } from './contenido';
 import { instagramUrl, mailtoUrl, nombreCompleto, parrafos, parsearSitio, whatsappUrl, type FilaSitio } from './sitio';
 
 const filaBase: FilaSitio = {
@@ -199,7 +199,7 @@ describe('snapshot versionado (src/data/sitio.json)', () => {
   it('cumple el contrato version 1 de contenido_landing()', () => {
     expect(contenido.version).toBe(1);
     expect(Object.keys(snapshot).sort()).toEqual(
-      ['configuracion_sitio', 'entorno', 'galeria', 'generado_en', 'mesa', 'origen', 'version'],
+      ['configuracion_sitio', 'entorno', 'eventos', 'galeria', 'generado_en', 'mesa', 'origen', 'version'],
     );
   });
 
@@ -218,5 +218,11 @@ describe('snapshot versionado (src/data/sitio.json)', () => {
 
   it('la galería es una lista válida (vacía hasta la fase 6b)', () => {
     expect(Array.isArray(contenido.galeria)).toBe(true);
+  });
+
+  it('todos los eventos son válidos (ninguno se descartaría)', () => {
+    const log = { warn: vi.fn() };
+    expect(eventosValidos(contenido.eventos, log)).toHaveLength(contenido.eventos.length);
+    expect(log.warn).not.toHaveBeenCalled();
   });
 });

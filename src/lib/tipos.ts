@@ -1,6 +1,6 @@
 /**
- * Tipos de dominio. No dependen de la fuente de datos (hoy archivos locales,
- * más adelante Supabase): src/lib/data.ts es quien convierte la fuente a estos tipos.
+ * Tipos de dominio. No dependen de la fuente de datos (hoy Supabase, con un snapshot de
+ * respaldo): src/lib/data.ts es quien convierte la fuente a estos tipos.
  */
 import type { ImageMetadata } from 'astro';
 

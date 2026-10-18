@@ -15,9 +15,9 @@ Sitio 100% estático, mobile-first (el tráfico llega desde Instagram en celular
 - `data.ts` convierte la fuente a los tipos de dominio de `src/lib/tipos.ts`. Esos tipos no deben depender de la fuente.
 - **Sitio y comisión vienen de Supabase, leídos en el build** (D-20 del dashboard): `src/lib/contenido.ts` (puro) llama a `contenido_landing()` con `SUPABASE_URL` y `SUPABASE_ANON_KEY` (variables del build, sin `PUBLIC_`), valida el contrato `version` 1 con zod y, si falla o tarda más de `CONTENIDO_TIMEOUT_MS` (10 s), usa el snapshot `src/data/sitio.json` con un `console.warn('[contenido] ⚠ …')`. El build nunca se rompe por la red. `data.ts` cachea la promesa: una sola lectura por build. **Nunca** leer Supabase desde el navegador.
 - El snapshot `src/data/sitio.json` es la salida de la función más `origen`, siempre de **producción** (lo verifica `sitio.test.ts`). Se actualiza a mano con `npm run snapshot` y commit; nunca con commits automáticos.
-- La función devuelve rutas de Storage (`foto_path`, `path`), no URLs: `urlStorage(origen, ruta)` las arma. Las imágenes remotas solo pueden ser de cartez-prod o cartez-dev: `HOSTS_SUPABASE` en `contenido.ts` y `image.remotePatterns` en `astro.config.mjs` (mantener ambos iguales). Se optimizan en el build con `astro:assets`.
+- La función devuelve rutas de Storage (`foto_path`, `path`, `flyer_path`), no URLs: `urlStorage(origen, bucket, ruta)` las arma. Las imágenes remotas solo pueden ser de cartez-prod o cartez-dev y de los buckets `galeria` y `landing`: `HOSTS_SUPABASE` y `BucketPublico` en `contenido.ts` e `image.remotePatterns` en `astro.config.mjs` (mantener todo igual). Se optimizan en el build con `astro:assets`.
 - Un campo nuevo del dashboard se agrega a propósito en los dos repos: `contenido_landing()`, `tests/fixtures/contrato-landing.json` del dashboard y `contenidoSchema` de acá. Las claves desconocidas se descartan.
-- Eventos: Content Collection (`src/content/eventos/*.md`, schema en `src/content.config.ts`) hasta que exista el módulo de eventos del dashboard. Galería: `getGaleria()` existe, pero ninguna sección la muestra todavía (fase 6b).
+- Eventos: vienen del dashboard (D-23) en `contenido.eventos`. Cada evento se valida por separado (`eventosValidos`): uno inválido se descarta con `console.warn('[contenido] evento descartado: <id> (<motivo>)')` y el resto sigue; solo si falta la lista o no es un array se usa el snapshot. `eventosDeContenido()` (`src/lib/eventos.ts`, puro) los convierte al tipo `Evento`. Galería: `getGaleria()` existe, pero ninguna sección la muestra todavía (fase 6b).
 - Textos y contactos: `getSitio()`, sobre `configuracion_sitio` (una sola fila, snake_case). `src/lib/sitio.ts` es puro: valida la fila y la convierte al tipo `Sitio` (`parsearSitio`), y arma las URLs de contacto.
 - `noindex` fuera de producción: `esSitioPublico()` (`src/lib/entorno.ts`) exige `CF_PAGES_BRANCH === 'main'` **y** datos de prod.
 - Los medios de contacto son opcionales. Un componente nunca debe asumir que existen: si falta el dato, no se renderiza el botón o link.
@@ -27,8 +27,8 @@ Sitio 100% estático, mobile-first (el tráfico llega desde Instagram en celular
 
 - Zona horaria **America/Argentina/Cordoba** para toda lógica de fechas. Nunca comparar en UTC ni con la hora del servidor o del navegador.
 - Toda la lógica vive en `src/lib/fechas.ts`, un módulo puro sin dependencias de Astro (se usa en el build y en el navegador). Cualquier cambio va con test en `src/lib/fechas.test.ts`.
-- Las fechas de eventos son fechas civiles `YYYY-MM-DD`. YAML parsea `2026-10-23` como medianoche UTC, así que siempre se pasa por `normalizarFecha()`.
-- Un evento vence a las `HORA_VENCIMIENTO` (23:00) del día `fechaFin` en Córdoba. Es una constante única: no repetirla en otro lado.
+- Las fechas de eventos son fechas civiles `YYYY-MM-DD` (columnas `date` de Postgres). Si alguna vez llegan como `Date` (p. ej. YAML, que parsea `2026-10-23` como medianoche UTC), se pasan por `normalizarFecha()`.
+- Un evento vence a las `HORA_VENCIMIENTO` (23:00) del día `fechaFin` en Córdoba. Es una constante única en el código de la landing; la base la repite en `privado.vencimiento_evento()` (dashboard, D-23): si cambia, cambian las dos (y la copia de `fechas.ts` del dashboard).
 - Doble filtro: el build no renderiza los vencidos y un script del navegador oculta los que vencieron después del build (`data-vence` en ISO 8601 con offset).
 
 ## Estilos

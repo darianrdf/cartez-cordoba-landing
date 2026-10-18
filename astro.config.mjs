@@ -12,12 +12,15 @@ export default defineConfig({
   // El CSS es chico y es una sola página: inlinearlo evita un recurso que bloquea el render.
   build: { inlineStylesheets: 'always' },
   image: {
-    // Imágenes remotas: solo el bucket galeria de cartez-prod y cartez-dev (Supabase Storage).
-    // Se descargan y optimizan en el build: el visitante nunca le pide nada a Supabase.
-    // Mantener en sincronía con HOSTS_SUPABASE de src/lib/contenido.ts.
+    // Imágenes remotas: solo los buckets públicos galeria (mesa) y landing (flyers de eventos) de
+    // cartez-prod y cartez-dev (Supabase Storage). Se descargan y optimizan en el build: el
+    // visitante nunca le pide nada a Supabase.
+    // Mantener en sincronía con HOSTS_SUPABASE y BucketPublico de src/lib/contenido.ts.
     remotePatterns: [
       { protocol: 'https', hostname: 'ymxtvtzzkqdngsavuigl.supabase.co', pathname: '/storage/v1/object/public/galeria/**' },
       { protocol: 'https', hostname: 'gaibxlhpjeslqyyfkoho.supabase.co', pathname: '/storage/v1/object/public/galeria/**' },
+      { protocol: 'https', hostname: 'ymxtvtzzkqdngsavuigl.supabase.co', pathname: '/storage/v1/object/public/landing/**' },
+      { protocol: 'https', hostname: 'gaibxlhpjeslqyyfkoho.supabase.co', pathname: '/storage/v1/object/public/landing/**' },
     ],
   },
   vite: {
