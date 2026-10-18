@@ -36,10 +36,10 @@
     ]
   },
   "entorno": "prod",
-  "galeria": [],
   "eventos": [],
+  "galeria": [],
   "version": 1,
-  "generado_en": "2026-10-18T00:28:20.222885+00:00",
+  "generado_en": "2026-10-18T22:50:52.508712+00:00",
   "configuracion_sitio": {
     "mail": "comisioncordobaateneocartez@gmail.com",
     "nombre": "Comisión Córdoba",
