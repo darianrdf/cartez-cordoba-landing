@@ -1,4 +1,6 @@
 ---
+// En la home las anclas son locales; en las demás páginas (eventos) vuelven a la home.
+const inicio = Astro.url.pathname === '/' ? '' : '/';
 import { Image } from 'astro:assets';
 import Mail from '@lucide/astro/icons/mail';
 import logoDisco from '@/assets/logos/logo-disco.png';
@@ -43,7 +45,7 @@ const claseLink = 'text-white transition-colors hover:text-gold motion-reduce:tr
           {
             secciones.map(({ id, etiqueta }) => (
               <li>
-                <a href={`#${id}`} class={claseLink}>
+                <a href={`${inicio}#${id}`} class={claseLink}>
                   {etiqueta}
                 </a>
               </li>

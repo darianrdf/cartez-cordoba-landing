@@ -13,7 +13,7 @@
  */
 import { z } from 'astro/zod';
 import { filaSitioSchema } from './sitio';
-import { CATEGORIAS, ORGANIZADORES } from './tipos';
+import { CATEGORIAS, COSTOS, FORMATOS, ORGANIZADORES } from './tipos';
 
 /** Proyectos de Supabase de los que se acepta contenido (cartez-prod y cartez-dev). */
 export const HOSTS_SUPABASE = ['ymxtvtzzkqdngsavuigl.supabase.co', 'gaibxlhpjeslqyyfkoho.supabase.co'] as const;
@@ -51,19 +51,50 @@ const fotoGaleriaSchema = z.object({
   orden: z.number().int(),
 });
 
-/** Un evento publicado. Se valida por separado (ver eventosValidos). */
+const hora = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/);
+const texto = z.string().trim().min(1);
+
+const bloqueSchema = z.object({
+  hora: hora.nullable(),
+  titulo: texto,
+  oradores: z.array(texto),
+  moderador: texto.nullable(),
+});
+
+/**
+ * Un evento publicado (D-23 y D-24). Se valida por separado (ver eventosValidos). Incluye los ya
+ * terminados: la landing los muestra en "Eventos anteriores".
+ */
 export const eventoSchema = z
   .object({
     id: z.uuid(),
-    titulo: z.string().trim().min(1),
+    slug: z.string().regex(/^[a-z0-9]+(-[a-z0-9]+)*$/),
+    titulo: texto,
     fecha: fechaCivil,
+    /** Igual a fecha si dura un día (nunca null en el contrato). */
     fecha_fin: fechaCivil,
-    lugar: z.string().trim().min(1),
+    hora_inicio: hora.nullable(),
+    hora_fin: hora.nullable(),
+    lugar: texto,
+    marco: texto.nullable(),
+    /** La foto por defecto del tipo. */
     categoria: z.enum(CATEGORIAS),
+    tipo: texto,
     organizador: z.enum(ORGANIZADORES),
+    organizador_nombre: texto.nullable(),
+    organiza_comision: z.boolean(),
+    acompanan: z.array(texto),
+    comision_participa: z.boolean(),
+    formato: z.enum(FORMATOS),
+    link_transmision: z.url().nullable(),
     link: z.url().nullable(),
+    costo: z.enum(COSTOS).nullable(),
+    costo_monto: texto.nullable(),
+    /** La descripción corta. */
     descripcion: z.string().nullable(),
+    descripcion_larga: z.string().nullable(),
     flyer_path: rutaFlyer.nullable(),
+    programa: z.array(bloqueSchema),
   })
   .refine((e) => e.fecha_fin >= e.fecha, { message: 'fecha_fin es anterior a fecha', path: ['fecha_fin'] });
 

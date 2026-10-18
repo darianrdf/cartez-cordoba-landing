@@ -7,7 +7,7 @@
 import snapshot from '@/data/sitio.json';
 import { obtenerContenido, TIMEOUT_POR_DEFECTO_MS, urlStorage, type Contenido } from '@/lib/contenido';
 import { esProduccion } from '@/lib/entorno';
-import { eventosDeContenido } from '@/lib/eventos';
+import { convertirEventos, eventosAnteriores, eventosProximos } from '@/lib/eventos';
 import { parsearSitio } from '@/lib/sitio';
 import type { Comision, Evento, FotoGaleria, Imagen, Sitio } from '@/lib/tipos';
 import { secciones, type Seccion } from '@/data/navegacion';
@@ -48,13 +48,23 @@ function contenido(): Promise<Contenido> {
   return contenidoDelBuild;
 }
 
+/** Todos los eventos publicados (también los terminados), por fecha. Uno por página /eventos/<slug>/. */
+export async function getTodosLosEventos(): Promise<Evento[]> {
+  const { origen, eventos } = await contenido();
+  return convertirEventos(origen, eventos);
+}
+
 /**
  * Eventos no vencidos (próximos y en curso) en el instante `ahora`, ordenados por fecha de inicio.
  * Se evalúa en el build; el navegador vuelve a filtrar al cargar (ver Eventos.astro).
  */
 export async function getEventos(ahora: Date = new Date()): Promise<Evento[]> {
-  const { origen, eventos } = await contenido();
-  return eventosDeContenido(origen, eventos, ahora);
+  return eventosProximos(await getTodosLosEventos(), ahora);
+}
+
+/** Eventos terminados en el instante `ahora`, del más reciente al más viejo. */
+export async function getEventosAnteriores(ahora: Date = new Date()): Promise<Evento[]> {
+  return eventosAnteriores(await getTodosLosEventos(), ahora);
 }
 
 /** Mesa vigente. La función ya filtra los cargos que se muestran en la landing. */

@@ -15,15 +15,30 @@ const DEV = 'https://gaibxlhpjeslqyyfkoho.supabase.co';
 /** Un evento como lo devuelve contenido_landing(). */
 const EVENTO = {
   id: '6f1c2a4e-8b3d-4c5e-9f7a-1b2c3d4e5f60',
+  slug: 'expo-rural-2026-11-10',
   titulo: 'Expo Rural',
   fecha: '2026-11-10',
   fecha_fin: '2026-11-12',
+  hora_inicio: '09:00',
+  hora_fin: null,
   lugar: 'Predio ferial',
+  marco: null,
   categoria: 'rural',
+  tipo: 'Exposición/Feria',
   organizador: 'externo',
+  organizador_nombre: 'Sociedad Rural',
+  organiza_comision: false,
+  acompanan: ['CRA'],
+  comision_participa: true,
+  formato: 'presencial',
+  link_transmision: null,
   link: 'https://expo.example.com',
+  costo: 'gratuito',
+  costo_monto: null,
   descripcion: null,
+  descripcion_larga: null,
   flyer_path: 'eventos/2026/10/6f1c2a4e.webp',
+  programa: [{ hora: '09:00', titulo: 'Apertura', oradores: ['Ana Prueba'], moderador: null }],
 };
 
 /** Lo que devuelve contenido_landing() (sin `origen`, que lo agrega la landing). */
@@ -180,6 +195,15 @@ describe('eventos', () => {
     expect(contenido.eventos).toEqual([EVENTO]);
     expect(log.warn).not.toHaveBeenCalled();
     expect(log.info).toHaveBeenCalledWith(expect.stringContaining('1 eventos'));
+  });
+
+  it('un evento sin las claves de D-24 (base sin migrar) o con un programa mal armado se descarta', () => {
+    const { slug: _, programa: __, ...deD23 } = EVENTO;
+    const log = { warn: vi.fn() };
+    const malPrograma = { ...EVENTO, id: '44444444-4444-4444-8444-444444444444', programa: [{ titulo: '' }] };
+    expect(eventosValidos([deD23, malPrograma, EVENTO], log)).toEqual([EVENTO]);
+    expect(log.warn).toHaveBeenCalledTimes(2);
+    expect(String(log.warn.mock.calls[1]![0])).toContain('44444444-4444-4444-8444-444444444444 (programa.0.');
   });
 
   it('descarta solo los eventos inválidos, con un aviso cada uno, y usa los demás', async () => {

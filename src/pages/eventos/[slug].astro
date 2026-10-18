@@ -1,0 +1,205 @@
+---
+/**
+ * Página de un evento (D-24): /eventos/<slug>/. Se genera una por cada evento publicado, también
+ * los terminados: esos muestran "Finalizado" y no ofrecen inscribirse. Si el evento termina
+ * después del build, el script de abajo hace lo mismo en el navegador.
+ */
+import { getImage, Image } from 'astro:assets';
+import ArrowLeft from '@lucide/astro/icons/arrow-left';
+import ExternalLink from '@lucide/astro/icons/external-link';
+import Video from '@lucide/astro/icons/video';
+import Footer from '@/components/sections/Footer.astro';
+import Header from '@/components/sections/Header.astro';
+import Layout from '@/layouts/Layout.astro';
+import { getSitio, getTodosLosEventos } from '@/lib/data';
+import { costoTexto, ETIQUETAS_FORMATO, fechaLarga, finalizado, horario, imagenDeEvento } from '@/lib/eventos';
+import { formatearRango, isoConOffset, vencimientoEvento } from '@/lib/fechas';
+import { FOTOS_POR_CATEGORIA } from '@/lib/fotos';
+import { esRemota, propsImagen } from '@/lib/imagenes';
+import type { Evento } from '@/lib/tipos';
+
+export async function getStaticPaths() {
+  const eventos = await getTodosLosEventos();
+  return eventos.map((evento) => ({ params: { slug: evento.slug }, props: { evento } }));
+}
+
+interface Props {
+  evento: Evento;
+}
+
+const { evento } = Astro.props;
+const sitio = await getSitio();
+const ahora = new Date();
+const terminado = finalizado(evento, ahora);
+const imagen = imagenDeEvento(evento, FOTOS_POR_CATEGORIA);
+const hora = horario(evento);
+const costo = costoTexto(evento);
+
+// Para compartir (WhatsApp, Instagram): JPEG de 1200 px de ancho. La foto del tipo se recorta a
+// 1200×630 (lo que esperan las vistas previas); el flyer va entero, para no cortarle el texto.
+const og = await getImage({
+  src: imagen,
+  width: 1200,
+  ...(evento.flyer ? {} : { height: 630, fit: 'cover' as const }),
+  format: 'jpeg',
+  quality: 80,
+  ...(esRemota(imagen) ? { inferSize: true } : {}),
+});
+
+const datos: { termino: string; definicion: string | undefined }[] = [
+  { termino: 'Fecha', definicion: fechaLarga(evento.fecha, evento.fechaFin) },
+  { termino: 'Horario', definicion: hora && `${hora} h` },
+  { termino: 'Lugar', definicion: evento.lugar },
+  { termino: 'Formato', definicion: ETIQUETAS_FORMATO[evento.formato] },
+  { termino: 'Organiza', definicion: evento.organizadorNombre },
+  { termino: 'Acompañan', definicion: evento.acompanan.length ? evento.acompanan.join(', ') : undefined },
+  { termino: 'Costo', definicion: costo },
+];
+---
+
+<Layout
+  titulo={`${evento.titulo} · ${formatearRango(evento.fecha, evento.fechaFin)} | ${sitio.nombre}`}
+  descripcion={evento.descripcion ?? sitio.descripcionMeta}
+  imagen={{ src: og.src, ancho: Number(og.attributes.width), alto: Number(og.attributes.height), alt: evento.titulo }}
+  tipoOG="article"
+>
+  <Header />
+  <main id="contenido" data-pagina-evento data-vence={isoConOffset(vencimientoEvento(evento.fechaFin))} class="bg-white">
+    <div class="mx-auto max-w-6xl space-y-12 px-4 py-10 md:py-16">
+      <a
+        href={terminado ? '/eventos/anteriores/' : '/#eventos'}
+        class="inline-flex items-center gap-1 rounded-md text-sm font-semibold text-green-strong underline-offset-4 hover:underline"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        {terminado ? 'Eventos anteriores' : 'Todos los eventos'}
+      </a>
+
+      <article class="grid items-start gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-12">
+        <div class="overflow-hidden rounded-xl bg-tint-green shadow-lg">
+          <Image
+            {...propsImagen(imagen)}
+            alt={evento.flyer ? `Flyer de ${evento.titulo}` : ''}
+            widths={[400, 640, 800, 1200]}
+            sizes="(min-width: 768px) 40vw, 100vw"
+            quality={70}
+            loading="eager"
+            class:list={['w-full', evento.flyer ? 'h-auto' : 'aspect-4/3 object-cover']}
+          />
+        </div>
+
+        <div class="space-y-6">
+          <div class="flex flex-wrap gap-2 text-xs font-semibold">
+            <span class="rounded-full bg-tint-green px-3 py-1 text-navy">{evento.tipo}</span>
+            {evento.organizaComision && <span class="rounded-full bg-gold px-3 py-1 text-navy">Organiza la Comisión</span>}
+            {
+              evento.comisionParticipa && !evento.organizaComision && (
+                <span class="rounded-full bg-tint-green px-3 py-1 text-green-strong">
+                  {terminado ? 'La Comisión participó' : 'La Comisión participa'}
+                </span>
+              )
+            }
+            <span data-finalizado hidden={!terminado} class="rounded-full bg-navy px-3 py-1 text-white">Finalizado</span>
+          </div>
+
+          <div class="space-y-3">
+            {evento.marco && <p class="text-sm font-semibold tracking-wide text-navy-muted uppercase">{evento.marco}</p>}
+            <h1 class="font-display text-3xl leading-tight font-semibold text-balance text-navy md:text-4xl">{evento.titulo}</h1>
+            {evento.descripcion && <p class="text-lg text-pretty text-ink">{evento.descripcion}</p>}
+          </div>
+
+          <dl class="grid gap-x-6 gap-y-3 border-y border-line py-5 sm:grid-cols-[auto_1fr]">
+            {
+              datos
+                .filter((d) => d.definicion)
+                .map((d) => (
+                  <>
+                    <dt class="text-sm font-semibold text-navy-muted">{d.termino}</dt>
+                    <dd class:list={['text-ink', d.termino === 'Fecha' && 'first-letter:uppercase']}>{d.definicion}</dd>
+                  </>
+                ))
+            }
+          </dl>
+
+          {
+            (evento.link || evento.linkTransmision) && (
+              <div class="flex flex-col gap-3 sm:flex-row">
+                {evento.link && (
+                  <a
+                    data-inscripcion
+                    hidden={terminado}
+                    href={evento.link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex min-h-12 items-center justify-center gap-2 rounded-full bg-green-strong px-6 font-semibold text-white shadow-md transition-colors hover:bg-navy motion-reduce:transition-none"
+                  >
+                    Inscribirme
+                    <ExternalLink size={18} aria-hidden="true" />
+                    <span class="sr-only">(abre en otra pestaña)</span>
+                  </a>
+                )}
+                {evento.linkTransmision && (
+                  <a
+                    href={evento.linkTransmision}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    class="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-navy px-6 font-semibold text-navy transition-colors hover:bg-tint-green motion-reduce:transition-none"
+                  >
+                    <Video size={18} aria-hidden="true" />
+                    Ver la transmisión
+                    <span class="sr-only">(abre en otra pestaña)</span>
+                  </a>
+                )}
+              </div>
+            )
+          }
+        </div>
+      </article>
+
+      {
+        evento.descripcionLarga && (
+          <section aria-labelledby="sobre-el-evento" class="max-w-3xl space-y-4">
+            <h2 id="sobre-el-evento" class="titulo-seccion">
+              Sobre el evento
+            </h2>
+            <p class="text-lg leading-relaxed whitespace-pre-line text-ink">{evento.descripcionLarga}</p>
+          </section>
+        )
+      }
+
+      {
+        evento.programa.length > 0 && (
+          <section aria-labelledby="programa" class="max-w-3xl space-y-6">
+            <h2 id="programa" class="titulo-seccion">
+              Programa
+            </h2>
+            <ol class="divide-y divide-line rounded-xl border border-line">
+              {evento.programa.map((bloque) => (
+                <li class="grid gap-1 p-4 sm:grid-cols-[5rem_1fr] sm:gap-4 md:p-5">
+                  <p class="font-semibold text-green-strong">
+                    {bloque.hora ? <time datetime={bloque.hora}>{bloque.hora}</time> : <span aria-hidden="true">—</span>}
+                  </p>
+                  <div class="space-y-1">
+                    <h3 class="font-semibold text-navy">{bloque.titulo}</h3>
+                    {bloque.oradores.length > 0 && <p class="text-ink">{bloque.oradores.join(', ')}</p>}
+                    {bloque.moderador && <p class="text-sm text-navy-muted">Modera: {bloque.moderador}</p>}
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </section>
+        )
+      }
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  // El sitio es estático: si el evento terminó después del último build, se marca "Finalizado"
+  // y se saca el botón de inscripción.
+  const pagina = document.querySelector<HTMLElement>('[data-pagina-evento]');
+  if (pagina && Date.now() >= Date.parse(pagina.dataset.vence!)) {
+    document.querySelector('[data-finalizado]')?.removeAttribute('hidden');
+    document.querySelector('[data-inscripcion]')?.setAttribute('hidden', '');
+  }
+</script>

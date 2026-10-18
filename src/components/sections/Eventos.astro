@@ -1,26 +1,14 @@
 ---
-import { Image } from 'astro:assets';
 import ArrowRight from '@lucide/astro/icons/arrow-right';
 import CalendarDays from '@lucide/astro/icons/calendar-days';
-import MapPin from '@lucide/astro/icons/map-pin';
-import { getEventos, getSitio } from '@/lib/data';
-import { ETIQUETAS_CATEGORIA, imagenDeEvento } from '@/lib/eventos';
-import {
-  estadoEvento,
-  etiquetaEnCurso,
-  formatearRango,
-  inicioEvento,
-  isoConOffset,
-  vencimientoEvento,
-} from '@/lib/fechas';
+import TarjetaEvento from '@/components/eventos/TarjetaEvento.astro';
 import Instagram from '@/components/iconos/Instagram.astro';
-import { FOTOS_POR_CATEGORIA } from '@/lib/fotos';
-import { propsImagen } from '@/lib/imagenes';
+import { getEventos, getEventosAnteriores, getSitio } from '@/lib/data';
 import { instagramUrl } from '@/lib/sitio';
-import { cn } from '@/lib/utils';
 
 const ahora = new Date();
 const eventos = await getEventos(ahora);
+const hayAnteriores = (await getEventosAnteriores(ahora)).length > 0;
 const sitio = await getSitio();
 const { instagram } = sitio.contacto;
 ---
@@ -63,95 +51,25 @@ const { instagram } = sitio.contacto;
     {
       eventos.length > 0 && (
         <ul data-eventos-lista class="grilla-eventos grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-          {eventos.map((evento) => {
-            const propio = evento.organizador === 'propio';
-            const enCurso = estadoEvento(evento, ahora) === 'en-curso';
-            const Contenedor = evento.link ? 'a' : 'article';
-            const propsContenedor = evento.link
-              ? { href: evento.link, target: '_blank', rel: 'noopener noreferrer' }
-              : {};
-            return (
-              <li
-                data-evento
-                data-inicio={isoConOffset(inicioEvento(evento.fecha))}
-                data-vence={isoConOffset(vencimientoEvento(evento.fechaFin))}
-                class="tarjeta-evento"
-              >
-                <Contenedor
-                  {...propsContenedor}
-                  class={cn(
-                    'aparecer relative isolate flex h-80 flex-col justify-end overflow-hidden rounded-xl bg-navy text-white shadow-lg',
-                    propio && 'ring-2 ring-gold',
-                  )}
-                >
-                  <Image
-                    {...propsImagen(imagenDeEvento(evento, FOTOS_POR_CATEGORIA))}
-                    alt=""
-                    widths={[400, 640, 800, 1200]}
-                    sizes="(min-width: 1024px) 370px, (min-width: 640px) 50vw, 100vw"
-                    quality={60}
-                    class="absolute inset-0 -z-20 h-full w-full object-cover"
-                  />
-                  <div
-                    aria-hidden="true"
-                    class="absolute inset-0 -z-10 bg-linear-to-t from-black/80 via-black/40 to-transparent"
-                  />
-
-                  <div class="absolute inset-x-4 top-4 flex items-start justify-between gap-2 text-xs font-semibold">
-                    <span
-                      class={cn(
-                        'rounded-full px-3 py-1',
-                        propio ? 'bg-gold text-navy' : 'bg-navy/85 text-white ring-1 ring-white/60',
-                      )}
-                    >
-                      {propio ? 'Organiza la Comisión' : 'Evento externo'}
-                    </span>
-                    <span
-                      data-en-curso
-                      hidden={!enCurso}
-                      class="rounded-full bg-green-strong px-3 py-1 text-white shadow"
-                    >
-                      {etiquetaEnCurso(evento.fecha, evento.fechaFin)}
-                    </span>
-                  </div>
-
-                  <div class="space-y-2 p-5">
-                    <p class="text-xs font-semibold tracking-widest text-gold uppercase">
-                      {ETIQUETAS_CATEGORIA[evento.categoria]}
-                    </p>
-                    <h3 class="line-clamp-2 font-display text-xl leading-snug font-semibold">{evento.titulo}</h3>
-                    <dl class="space-y-1 text-sm text-white">
-                      <div class="flex items-center gap-2">
-                        <dt>
-                          <CalendarDays size={16} aria-hidden="true" />
-                          <span class="sr-only">Fecha</span>
-                        </dt>
-                        <dd>
-                          <time datetime={evento.fecha}>{formatearRango(evento.fecha, evento.fechaFin)}</time>
-                        </dd>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <dt>
-                          <MapPin size={16} aria-hidden="true" />
-                          <span class="sr-only">Lugar</span>
-                        </dt>
-                        <dd class="truncate">{evento.lugar}</dd>
-                      </div>
-                    </dl>
-                    {evento.descripcion && <p class="line-clamp-2 text-sm text-white/90">{evento.descripcion}</p>}
-                    {evento.link && (
-                      <span class="inline-flex items-center gap-1 pt-1 text-sm font-semibold text-gold">
-                        Más información
-                        <ArrowRight size={16} aria-hidden="true" />
-                        <span class="sr-only">(abre en otra pestaña)</span>
-                      </span>
-                    )}
-                  </div>
-                </Contenedor>
-              </li>
-            );
-          })}
+          {eventos.map((evento) => (
+            <TarjetaEvento evento={evento} ahora={ahora} />
+          ))}
         </ul>
+      )
+    }
+
+    {
+      // Si un evento termina después del build, el script muestra el link (la página ya lo incluye).
+      (hayAnteriores || eventos.length > 0) && (
+        <p data-ver-anteriores hidden={!hayAnteriores}>
+          <a
+            href="/eventos/anteriores/"
+            class="inline-flex items-center gap-1 rounded-md font-semibold text-green-strong underline-offset-4 hover:underline"
+          >
+            Ver eventos anteriores
+            <ArrowRight size={18} aria-hidden="true" />
+          </a>
+        </p>
       )
     }
   </div>
@@ -163,7 +81,7 @@ const { instagram } = sitio.contacto;
   import { estadoPorInstantes } from '@/lib/fechas';
 
   const ahora = Date.now();
-  const tarjetas = document.querySelectorAll<HTMLElement>('[data-evento]');
+  const tarjetas = document.querySelectorAll<HTMLElement>('[data-eventos-lista] [data-evento]');
   let visibles = 0;
 
   for (const tarjeta of tarjetas) {
@@ -172,6 +90,7 @@ const { instagram } = sitio.contacto;
     tarjeta.querySelector<HTMLElement>('[data-en-curso]')?.toggleAttribute('hidden', estado !== 'en-curso');
     if (!tarjeta.hidden) visibles++;
   }
+  if (visibles < tarjetas.length) document.querySelector('[data-ver-anteriores]')?.removeAttribute('hidden');
 
   if (tarjetas.length > 0 && visibles === 0) {
     document.querySelector<HTMLElement>('[data-eventos-lista]')?.setAttribute('hidden', '');

@@ -1,4 +1,6 @@
 ---
+// En la home las anclas son locales; en las demás páginas (eventos) vuelven a la home.
+const inicio = Astro.url.pathname === '/' ? '' : '/';
 import { Image } from 'astro:assets';
 import logoHorizontal from '@/assets/logos/logo-horizontal.png';
 import { getSecciones, getSitio } from '@/lib/data';
@@ -29,7 +31,7 @@ const claseBoton =
   <div
     class="relative mx-auto flex h-(--header-height) max-w-6xl items-center justify-between px-4 transition-[height] duration-300 group-data-compacto:h-(--header-height-compacto) motion-reduce:transition-none"
   >
-    <a href="#inicio" class="flex items-center rounded-md">
+    <a href={`${inicio}#inicio`} class="flex items-center rounded-md">
       <Image
         src={logoHorizontal}
         alt={nombreCompleto(sitio)}
@@ -63,7 +65,7 @@ const claseBoton =
         {
           secciones.map(({ id, etiqueta }) => (
             <li class={cn(id === 'contacto' && 'mt-2 md:mt-0 md:ml-3')}>
-              <a href={`#${id}`} class={id === 'contacto' ? claseBoton : claseLink}>
+              <a href={`${inicio}#${id}`} class={id === 'contacto' ? claseBoton : claseLink}>
                 {etiqueta}
               </a>
             </li>

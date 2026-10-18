@@ -38,17 +38,20 @@ En `sitio.json`, `configuracion_sitio` es la fila del dashboard. Las imágenes s
 
 ## Eventos
 
-Los eventos se cargan en el dashboard, sección **Eventos** (solo la mesa): nombre, fecha (y "hasta", si dura varios días), lugar, tipo (rural, congreso, charla, visita, peña o actividad), quién lo organiza, link y descripción opcionales, y un flyer opcional. Aparecen en la página los que están marcados **«Mostrar en la página»**, después de tocar **«Publicar cambios»**. Ver `docs/OPERACION.md` del dashboard.
+Los eventos se cargan en el dashboard, sección **Eventos** (solo la mesa, D-23 y D-24): nombre, fechas y horario, lugar, marco, tipo, quién organiza y quiénes acompañan, formato, inscripción, costo, descripción corta y larga, programa y flyer. Aparecen en la página los que están marcados **«Mostrar en la página»**, después de tocar **«Publicar cambios»**. Ver `docs/OPERACION.md` del dashboard.
 
-- La tarjeta usa el flyer y, si no hay, la foto de la categoría (`src/lib/fotos.ts`).
-- `contenido_landing()` devuelve solo los publicados, no dados de baja y no vencidos; `src/lib/eventos.ts` (`eventosDeContenido`) los convierte al tipo `Evento` y vuelve a filtrar los vencidos.
+- **Home (sección Eventos):** solo los próximos y en curso, con la tarjeta (descripción corta, fecha y hora, lugar, tipo y las marcas «Organiza la Comisión» o «La Comisión participa»). La tarjeta lleva a la página del evento.
+- **Página del evento:** `src/pages/eventos/[slug].astro` genera `/eventos/<slug>/` para cada evento publicado, también los terminados. Tiene el detalle completo, el programa como agenda y meta tags Open Graph (el flyer, o la foto del tipo recortada a 1200×630).
+- **Eventos anteriores:** `/eventos/anteriores/`, del que terminó más recientemente. Un evento terminado no desaparece: queda con «Finalizado» y sin botón de inscripción.
+- La tarjeta usa el flyer y, si no hay, la foto que eligió su tipo en el dashboard (`categoria` en el contrato, `src/lib/fotos.ts`).
+- `contenido_landing()` devuelve todos los publicados y no dados de baja; `src/lib/eventos.ts` (`convertirEventos`, `eventosProximos`, `eventosAnteriores`) los convierte al tipo `Evento` y los separa.
 
 Cómo se muestran:
 
 - Se ordenan por fecha de inicio. Formato: `10 mar` (un día), `10–12 mar` (mismo mes), `30 mar – 2 abr` (distinto mes), `30 dic 2026 – 2 ene 2027` (distinto año).
 - Un evento de un día lleva la etiqueta **Hoy** ese día. Uno de varios días lleva **En curso** entre el primer y el último día.
-- Un evento deja de mostrarse a las **23:00 (hora de Córdoba) del último día**.
-- Los eventos vencidos no se incluyen al compilar. Además, la página oculta al cargar los que vencieron después del último build, así que no hace falta recompilar para sacarlos. Sí hace falta publicar (o esperar la reconstrucción diaria de las 9, hora de Córdoba) para que aparezca un evento nuevo.
+- Un evento termina a las **23:00 (hora de Córdoba) del último día**: sale de la home y pasa a «Eventos anteriores».
+- El sitio es estático: al cargar, cada página corrige lo que cambió después del último build (la home oculta los terminados; «Eventos anteriores» los muestra; la página del evento marca «Finalizado» y saca la inscripción). Sí hace falta publicar (o esperar la reconstrucción diaria de las 9, hora de Córdoba) para que aparezca un evento nuevo.
 
 ## Publicación
 

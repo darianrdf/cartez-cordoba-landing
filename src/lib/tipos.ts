@@ -13,21 +13,62 @@ export type Organizador = (typeof ORGANIZADORES)[number];
 /** Imagen local (ImageMetadata, optimizada por Astro) o URL externa (p. ej. Supabase Storage). */
 export type Imagen = ImageMetadata | string;
 
+export const FORMATOS = ['presencial', 'virtual', 'hibrido'] as const;
+export const COSTOS = ['gratuito', 'pago', 'a_confirmar'] as const;
+
+export type Formato = (typeof FORMATOS)[number];
+export type Costo = (typeof COSTOS)[number];
+
+/** Un bloque del programa (agenda) de un evento. */
+export interface BloquePrograma {
+  /** 'HH:MM'. */
+  hora?: string;
+  titulo: string;
+  oradores: string[];
+  moderador?: string;
+}
+
 export interface Evento {
   id: string;
+  /** URL de su página: /eventos/<slug>/. */
+  slug: string;
   titulo: string;
   /** Fecha civil de inicio, 'YYYY-MM-DD'. */
   fecha: string;
   /** Fecha civil de fin, 'YYYY-MM-DD'. Igual a `fecha` si el evento dura un día. */
   fechaFin: string;
+  /** 'HH:MM'. */
+  horaInicio?: string;
+  horaFin?: string;
   lugar: string;
+  /** Evento más grande del que forma parte (ej. "ArgenCarne Río Cuarto 2026"). */
+  marco?: string;
+  /** Tipo de evento tal como se muestra (ej. "Jornada"). */
+  tipo: string;
+  /** Qué foto por defecto usa si no hay flyer (src/lib/fotos.ts). */
   categoria: Categoria;
-  organizador: Organizador;
+  /** Nombre de quien organiza. */
+  organizadorNombre?: string;
+  /** Lo organiza la Comisión: la tarjeta se destaca. */
+  organizaComision: boolean;
+  /** Instituciones que acompañan. */
+  acompanan: string[];
+  /** La Comisión participa o asiste (aunque organice otro). */
+  comisionParticipa: boolean;
+  formato: Formato;
+  linkTransmision?: string;
+  /** Link de inscripción. */
   link?: string;
+  costo?: Costo;
+  costoMonto?: string;
+  /** Descripción corta (tarjeta). */
+  descripcion?: string;
+  /** Descripción larga (página del evento), con saltos de línea. */
+  descripcionLarga?: string;
   /** Imagen de la tarjeta. Si falta, se usa el flyer y, si tampoco hay, la foto por defecto de la categoría. */
   imagen?: Imagen;
   flyer?: Imagen;
-  descripcion?: string;
+  programa: BloquePrograma[];
 }
 
 export interface Miembro {

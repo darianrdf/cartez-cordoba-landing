@@ -1,0 +1,61 @@
+---
+/**
+ * Eventos anteriores (D-24): los publicados que ya terminaron, del más reciente al más viejo.
+ * Incluye ocultos los que todavía no terminaron: si alguno termina después del build, el
+ * script lo muestra (así no hay que esperar a la reconstrucción diaria).
+ */
+import ArrowLeft from '@lucide/astro/icons/arrow-left';
+import TarjetaEvento from '@/components/eventos/TarjetaEvento.astro';
+import Footer from '@/components/sections/Footer.astro';
+import Header from '@/components/sections/Header.astro';
+import Layout from '@/layouts/Layout.astro';
+import { getSitio, getTodosLosEventos } from '@/lib/data';
+import { finalizado, masRecientePrimero } from '@/lib/eventos';
+
+const ahora = new Date();
+const sitio = await getSitio();
+// Del que terminó más recientemente al más viejo.
+const eventos = (await getTodosLosEventos()).sort(masRecientePrimero);
+const hayAnteriores = eventos.some((e) => finalizado(e, ahora));
+---
+
+<Layout
+  titulo={`Eventos anteriores | ${sitio.nombre}`}
+  descripcion={`Los eventos que organizó la ${sitio.nombre} del ${sitio.organizacion} y a los que fue.`}
+>
+  <Header />
+  <main id="contenido" class="bg-tint-green">
+    <div class="mx-auto max-w-6xl space-y-10 px-4 py-14 md:py-20">
+      <a
+        href="/#eventos"
+        class="inline-flex items-center gap-1 rounded-md text-sm font-semibold text-green-strong underline-offset-4 hover:underline"
+      >
+        <ArrowLeft size={16} aria-hidden="true" />
+        Próximos eventos
+      </a>
+      <div class="space-y-3">
+        <h1 class="titulo-seccion">Eventos anteriores</h1>
+        <p class="max-w-2xl text-lg text-navy-muted">Lo que hicimos y los eventos a los que fuimos.</p>
+      </div>
+
+      <p data-anteriores-vacio hidden={hayAnteriores} class="rounded-xl bg-white px-6 py-10 text-center text-lg text-navy">
+        Todavía no hay eventos anteriores.
+      </p>
+      <ul data-anteriores-lista class="grilla-eventos grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        {eventos.map((evento) => <TarjetaEvento evento={evento} ahora={ahora} anterior oculta={!finalizado(evento, ahora)} />)}
+      </ul>
+    </div>
+  </main>
+  <Footer />
+</Layout>
+
+<script>
+  // Muestra los que terminaron después del build.
+  const ahora = Date.now();
+  let visibles = 0;
+  for (const tarjeta of document.querySelectorAll<HTMLElement>('[data-anteriores-lista] [data-evento]')) {
+    tarjeta.hidden = ahora < Date.parse(tarjeta.dataset.vence!);
+    if (!tarjeta.hidden) visibles++;
+  }
+  document.querySelector('[data-anteriores-vacio]')?.toggleAttribute('hidden', visibles > 0);
+</script>
