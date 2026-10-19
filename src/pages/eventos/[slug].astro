@@ -13,7 +13,7 @@ import Header from '@/components/sections/Header.astro';
 import Layout from '@/layouts/Layout.astro';
 import Compartir from '@/components/eventos/Compartir.astro';
 import { textoCompartir } from '@/lib/compartir';
-import { COLORES } from '@/lib/contraste';
+import { OG_ALTO, OG_ANCHO } from '@/lib/og';
 import { getSitio, getTodosLosEventos } from '@/lib/data';
 import { costoTexto, ETIQUETAS_FORMATO, fechaLarga, finalizado, horario, imagenDeEvento, rutaEvento } from '@/lib/eventos';
 import { formatearRango, isoConOffset, vencimientoEvento } from '@/lib/fechas';
@@ -39,16 +39,20 @@ const hora = horario(evento);
 const costo = costoTexto(evento);
 
 // Para compartir (WhatsApp, Instagram): JPEG de 1200×630, lo que esperan las vistas previas.
-// La foto del tipo se recorta; el flyer va entero sobre fondo navy, para no cortarle el texto.
-const og = await getImage({
-  src: imagen,
-  width: 1200,
-  height: 630,
-  ...(evento.flyer ? { fit: 'contain' as const, background: COLORES.navy } : { fit: 'cover' as const }),
-  format: 'jpeg',
-  quality: 80,
-  ...(esRemota(imagen) ? { inferSize: true } : {}),
-});
+// El flyer va entero sobre fondo navy, para no cortarle el texto: lo arma ./[slug]/og.jpg.ts
+// (el fit 'contain' de Astro no agrega el fondo). La foto del tipo se recorta con astro:assets.
+const og =
+  typeof evento.flyer === 'string'
+    ? { src: `${rutaEvento(evento)}og.jpg`, ancho: OG_ANCHO, alto: OG_ALTO }
+    : await getImage({
+        src: imagen,
+        width: OG_ANCHO,
+        height: OG_ALTO,
+        fit: 'cover',
+        format: 'jpeg',
+        quality: 80,
+        ...(esRemota(imagen) ? { inferSize: true } : {}),
+      }).then((img) => ({ src: img.src, ancho: Number(img.attributes.width), alto: Number(img.attributes.height) }));
 // La misma que la canónica (Layout): producción en main, el preview en otras ramas.
 const urlEvento = new URL(rutaEvento(evento), Astro.site).href;
 
@@ -66,7 +70,7 @@ const datos: { termino: string; definicion: string | undefined }[] = [
 <Layout
   titulo={`${evento.titulo} · ${formatearRango(evento.fecha, evento.fechaFin)} | ${sitio.nombre}`}
   descripcion={evento.descripcion ?? sitio.descripcionMeta}
-  imagen={{ src: og.src, ancho: Number(og.attributes.width), alto: Number(og.attributes.height), alt: evento.titulo }}
+  imagen={{ ...og, alt: evento.titulo }}
   tipoOG="article"
 >
   <Header />
