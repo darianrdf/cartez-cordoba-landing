@@ -90,6 +90,24 @@ const eventos = [
     organiza_comision: false,
     descripcion: null,
   },
+  {
+    // Flyer que no existe en Storage: el build no se rompe y el evento usa la foto del tipo
+    // (conFlyersDisponibles). Sin red pasa lo mismo.
+    ...base,
+    id: '00000000-0000-4000-8000-000000000004',
+    slug: 'visita-con-flyer-roto',
+    titulo: 'Visita a campo',
+    fecha: dia(20),
+    fecha_fin: dia(20),
+    lugar: 'Villa María',
+    categoria: 'visita',
+    tipo: 'Visita',
+    organizador: 'externo',
+    organizador_nombre: 'Ateneo CARTEZ',
+    organiza_comision: false,
+    descripcion: 'Recorrida por un establecimiento ganadero.',
+    flyer_path: 'eventos/e2e/no-existe.webp',
+  },
 ];
 
 mkdirSync('.e2e', { recursive: true });

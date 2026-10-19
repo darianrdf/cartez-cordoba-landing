@@ -112,3 +112,26 @@ test('Open Graph completo para la vista previa de WhatsApp', async ({ page, requ
   const { width, height } = await sharp(await respuesta.body()).metadata();
   expect([width, height]).toEqual([1200, 630]);
 });
+
+test('evento con flyer que no baja: foto del tipo en la tarjeta, el detalle y Open Graph', async ({ page, request }) => {
+  const ruta = '/eventos/visita-con-flyer-roto/';
+  await page.goto(ruta);
+  // Detalle: sin flyer (su alt sería "Flyer de …"), con la foto del tipo.
+  await expect(page.getByRole('img', { name: /^Flyer de/ })).toHaveCount(0);
+  await expect(page.locator('article img').first()).toHaveAttribute('src', /evento-visita/);
+
+  // Open Graph: la foto del tipo en 1200×630, no og.jpg (que no se generó).
+  const imagen = new URL((await page.locator('meta[property="og:image"]').getAttribute('content'))!);
+  expect(imagen.pathname).not.toMatch(/og\.jpg$/);
+  const respuesta = await request.get(imagen.pathname);
+  expect(respuesta.status()).toBe(200);
+  const { width, height } = await sharp(await respuesta.body()).metadata();
+  expect([width, height]).toEqual([1200, 630]);
+  expect((await request.get(`${ruta}og.jpg`)).status()).toBe(404);
+
+  // Tarjeta en la home, con su foto.
+  await page.goto('/');
+  const tarjeta = page.locator(`[data-evento]:has(a[href="${ruta}"])`);
+  await expect(tarjeta).toBeVisible();
+  await expect(tarjeta.locator('img')).toHaveAttribute('src', /evento-visita/);
+});

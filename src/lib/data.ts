@@ -8,6 +8,7 @@ import { readFile } from 'node:fs/promises';
 import snapshot from '@/data/sitio.json';
 import { contenidoFijo, obtenerContenido, TIMEOUT_POR_DEFECTO_MS, urlStorage, type Contenido } from '@/lib/contenido';
 import { esProduccion } from '@/lib/entorno';
+import { conFlyersDisponibles } from '@/lib/flyers';
 import { convertirEventos, eventosAnteriores, eventosProximos } from '@/lib/eventos';
 import { parsearSitio } from '@/lib/sitio';
 import type { Comision, Evento, FotoGaleria, Imagen, Sitio } from '@/lib/tipos';
@@ -55,10 +56,16 @@ function contenido(): Promise<Contenido> {
   return contenidoDelBuild;
 }
 
-/** Todos los eventos publicados (también los terminados), por fecha. Uno por página /eventos/<slug>/. */
-export async function getTodosLosEventos(): Promise<Evento[]> {
-  const { origen, eventos } = await contenido();
-  return convertirEventos(origen, eventos);
+let eventosDelBuild: Promise<Evento[]> | undefined;
+
+/**
+ * Todos los eventos publicados (también los terminados), por fecha. Uno por página /eventos/<slug>/.
+ * Los flyers se verifican una sola vez por build: el que no baja se descarta (foto del tipo).
+ */
+export function getTodosLosEventos(): Promise<Evento[]> {
+  eventosDelBuild ??= contenido().then(({ origen, eventos }) => conFlyersDisponibles(convertirEventos(origen, eventos)));
+  // Copia: quien la ordene no cambia la de los demás.
+  return eventosDelBuild.then((eventos) => [...eventos]);
 }
 
 /**

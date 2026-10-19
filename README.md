@@ -44,7 +44,7 @@ Los eventos se cargan en el dashboard, sección **Eventos** (solo la mesa, D-23 
 - **Home (sección Eventos):** solo los próximos y en curso, con la tarjeta (descripción corta, fecha y hora, lugar, tipo, quién organiza —«Organiza la Comisión» u «Organiza: <nombre>»— y «La Comisión participa»). La tarjeta lleva a la página del evento.
 - **Página del evento:** `src/pages/eventos/[slug].astro` genera `/eventos/<slug>/` para cada evento publicado, también los terminados. Tiene el detalle completo, el programa como agenda, el botón **Compartir** (`src/components/eventos/Compartir.astro`: menú nativo en el celular; WhatsApp y «Copiar link» en la compu) y meta tags Open Graph con imagen de 1200×630 (la foto del tipo recortada, o el flyer entero sobre fondo navy).
 - **Eventos anteriores:** `/eventos/anteriores/`, del que terminó más recientemente. Un evento terminado no desaparece: queda con «Finalizado» y sin botón de inscripción.
-- La tarjeta usa el flyer y, si no hay, la foto que eligió su tipo en el dashboard (`categoria` en el contrato, `src/lib/fotos.ts`).
+- La tarjeta usa el flyer y, si no hay, la foto que eligió su tipo en el dashboard (`categoria` en el contrato, `src/lib/fotos.ts`). Si el flyer no se puede bajar en el build, el evento usa la foto del tipo en todos lados y el log dice `[contenido] flyer no disponible: <slug>`.
 - `contenido_landing()` devuelve todos los publicados y no dados de baja; `src/lib/eventos.ts` (`convertirEventos`, `eventosProximos`, `eventosAnteriores`) los convierte al tipo `Evento` y los separa.
 
 Cómo se muestran:
