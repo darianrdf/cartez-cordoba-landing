@@ -13,6 +13,7 @@ npm run build     # genera el sitio estático en dist/
 npm run preview   # sirve dist/ para revisarlo
 npm run check     # chequeo de tipos
 npm test          # tests (Vitest)
+npm run test:e2e  # build de prueba en dist-e2e/ + Playwright en Chrome (capturas en capturas/)
 npm run snapshot  # actualiza src/data/sitio.json con el contenido de producción (ver abajo)
 npm run og        # regenera public/og.png (imagen para compartir el link)
 npm run logo      # regenera src/assets/logos/logo-disco.png (logo en disco blanco)
@@ -40,8 +41,8 @@ En `sitio.json`, `configuracion_sitio` es la fila del dashboard. Las imágenes s
 
 Los eventos se cargan en el dashboard, sección **Eventos** (solo la mesa, D-23 y D-24): nombre, fechas y horario, lugar, marco, tipo, quién organiza y quiénes acompañan, formato, inscripción, costo, descripción corta y larga, programa y flyer. Aparecen en la página los que están marcados **«Mostrar en la página»**, después de tocar **«Publicar cambios»**. Ver `docs/OPERACION.md` del dashboard.
 
-- **Home (sección Eventos):** solo los próximos y en curso, con la tarjeta (descripción corta, fecha y hora, lugar, tipo y las marcas «Organiza la Comisión» o «La Comisión participa»). La tarjeta lleva a la página del evento.
-- **Página del evento:** `src/pages/eventos/[slug].astro` genera `/eventos/<slug>/` para cada evento publicado, también los terminados. Tiene el detalle completo, el programa como agenda y meta tags Open Graph (el flyer, o la foto del tipo recortada a 1200×630).
+- **Home (sección Eventos):** solo los próximos y en curso, con la tarjeta (descripción corta, fecha y hora, lugar, tipo, quién organiza —«Organiza la Comisión» u «Organiza: <nombre>»— y «La Comisión participa»). La tarjeta lleva a la página del evento.
+- **Página del evento:** `src/pages/eventos/[slug].astro` genera `/eventos/<slug>/` para cada evento publicado, también los terminados. Tiene el detalle completo, el programa como agenda, el botón **Compartir** (`src/components/eventos/Compartir.astro`: menú nativo en el celular; WhatsApp y «Copiar link» en la compu) y meta tags Open Graph con imagen de 1200×630 (la foto del tipo recortada, o el flyer entero sobre fondo navy).
 - **Eventos anteriores:** `/eventos/anteriores/`, del que terminó más recientemente. Un evento terminado no desaparece: queda con «Finalizado» y sin botón de inscripción.
 - La tarjeta usa el flyer y, si no hay, la foto que eligió su tipo en el dashboard (`categoria` en el contrato, `src/lib/fotos.ts`).
 - `contenido_landing()` devuelve todos los publicados y no dados de baja; `src/lib/eventos.ts` (`convertirEventos`, `eventosProximos`, `eventosAnteriores`) los convierte al tipo `Evento` y los separa.
@@ -55,7 +56,7 @@ Cómo se muestran:
 
 ## Publicación
 
-El sitio se publica en https://ateneo-cartez-cordoba.pages.dev (configurado como `site` en `astro.config.mjs`; si cambia el dominio, actualizarlo ahí). Cloudflare Pages construye cada push:
+El sitio se publica en https://ateneo-cartez-cordoba.pages.dev (`SITIO_PRODUCCION` en `src/lib/entorno.ts`; si cambia el dominio, actualizarlo ahí). `site` de Astro sale de `siteDeRama(CF_PAGES_BRANCH)`: en `main` es producción y en otra rama es su preview (`dev` → https://dev.ateneo-cartez-cordoba.pages.dev), así la URL canónica, Open Graph y «Compartir» de un preview apuntan al mismo preview. Cloudflare Pages construye cada push:
 
 | Rama | Dónde se ve | Lee de | Indexable |
 |---|---|---|---|
