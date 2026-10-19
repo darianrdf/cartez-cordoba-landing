@@ -50,7 +50,7 @@ const { instagram } = sitio.contacto;
 
     {
       eventos.length > 0 && (
-        <ul data-eventos-lista class="grilla-eventos grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+        <ul data-eventos-lista class="grilla-eventos grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {eventos.map((evento) => (
             <TarjetaEvento evento={evento} ahora={ahora} />
           ))}

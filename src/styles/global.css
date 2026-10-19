@@ -106,6 +106,17 @@
     scroll-padding-top: var(--header-height);
   }
 
+  /*
+   * Red de seguridad: si algo se pasa del ancho, que no achique toda la página en el celular.
+   * La causa se corrige en el origen (grid-cols-1, min-w-0, wrap-anywhere) y la vigila
+   * e2e/desborde.e2e.ts, que anula esta regla para medir. `clip` y no `hidden`: hidden
+   * convierte a html/body en contenedores de scroll y rompe el header sticky.
+   */
+  html,
+  body {
+    overflow-x: clip;
+  }
+
   @media (prefers-reduced-motion: no-preference) {
     html {
       scroll-behavior: smooth;

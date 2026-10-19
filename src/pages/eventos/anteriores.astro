@@ -41,7 +41,7 @@ const hayAnteriores = eventos.some((e) => finalizado(e, ahora));
       <p data-anteriores-vacio hidden={hayAnteriores} class="rounded-xl bg-white px-6 py-10 text-center text-lg text-navy">
         Todavía no hay eventos anteriores.
       </p>
-      <ul data-anteriores-lista class="grilla-eventos grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <ul data-anteriores-lista class="grilla-eventos grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
         {eventos.map((evento) => <TarjetaEvento evento={evento} ahora={ahora} anterior oculta={!finalizado(evento, ahora)} />)}
       </ul>
     </div>

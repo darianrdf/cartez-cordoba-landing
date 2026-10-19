@@ -74,7 +74,7 @@ const datos: { termino: string; definicion: string | undefined }[] = [
         {terminado ? 'Eventos anteriores' : 'Todos los eventos'}
       </a>
 
-      <article class="grid items-start gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-12">
+      <article class="grid grid-cols-1 items-start gap-8 md:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] md:gap-12">
         <div class="overflow-hidden rounded-xl bg-tint-green shadow-lg">
           <Image
             {...propsImagen(imagen)}
@@ -102,19 +102,19 @@ const datos: { termino: string; definicion: string | undefined }[] = [
           </div>
 
           <div class="space-y-3">
-            {evento.marco && <p class="text-sm font-semibold tracking-wide text-navy-muted uppercase">{evento.marco}</p>}
-            <h1 class="font-display text-3xl leading-tight font-semibold text-balance text-navy md:text-4xl">{evento.titulo}</h1>
-            {evento.descripcion && <p class="text-lg text-pretty text-ink">{evento.descripcion}</p>}
+            {evento.marco && <p class="text-sm font-semibold tracking-wide wrap-anywhere text-navy-muted uppercase">{evento.marco}</p>}
+            <h1 class="font-display text-3xl leading-tight font-semibold text-balance wrap-anywhere text-navy md:text-4xl">{evento.titulo}</h1>
+            {evento.descripcion && <p class="text-lg text-pretty wrap-anywhere text-ink">{evento.descripcion}</p>}
           </div>
 
-          <dl class="grid gap-x-6 gap-y-3 border-y border-line py-5 sm:grid-cols-[auto_1fr]">
+          <dl class="grid grid-cols-1 gap-x-6 gap-y-3 border-y border-line py-5 sm:grid-cols-[auto_minmax(0,1fr)]">
             {
               datos
                 .filter((d) => d.definicion)
                 .map((d) => (
                   <>
                     <dt class="text-sm font-semibold text-navy-muted">{d.termino}</dt>
-                    <dd class:list={['text-ink', d.termino === 'Fecha' && 'first-letter:uppercase']}>{d.definicion}</dd>
+                    <dd class:list={['text-ink wrap-anywhere', d.termino === 'Fecha' && 'first-letter:uppercase']}>{d.definicion}</dd>
                   </>
                 ))
             }
@@ -161,7 +161,7 @@ const datos: { termino: string; definicion: string | undefined }[] = [
             <h2 id="sobre-el-evento" class="titulo-seccion">
               Sobre el evento
             </h2>
-            <p class="text-lg leading-relaxed whitespace-pre-line text-ink">{evento.descripcionLarga}</p>
+            <p class="text-lg leading-relaxed whitespace-pre-line wrap-anywhere text-ink">{evento.descripcionLarga}</p>
           </section>
         )
       }
@@ -174,7 +174,7 @@ const datos: { termino: string; definicion: string | undefined }[] = [
             </h2>
             <ol class="divide-y divide-line rounded-xl border border-line">
               {evento.programa.map((bloque) => (
-                <li class="grid gap-1 p-4 sm:grid-cols-[5rem_1fr] sm:gap-4 md:p-5">
+                <li class="grid grid-cols-1 gap-1 p-4 wrap-anywhere sm:grid-cols-[5rem_minmax(0,1fr)] sm:gap-4 md:p-5">
                   <p class="font-semibold text-green-strong">
                     {bloque.hora ? <time datetime={bloque.hora}>{bloque.hora}</time> : <span aria-hidden="true">—</span>}
                   </p>

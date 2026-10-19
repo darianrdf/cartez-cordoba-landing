@@ -59,7 +59,7 @@ const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.insta
             <li class="aparecer">
               <a href={mailtoUrl(contacto.mail)} class={claseBoton}>
                 <Mail size={22} aria-hidden="true" class="shrink-0" />
-                <span class="text-sm sm:text-base">
+                <span class="min-w-0 text-sm wrap-anywhere sm:text-base">
                   <span class="sr-only">Mail: </span>
                   {/* Permite cortar antes de la @ en pantallas angostas */}
                   {contacto.mail.split('@')[0]}<wbr />@{contacto.mail.split('@').slice(1).join('@')}

@@ -14,14 +14,19 @@ async function sinRedDeSeguridad(page: Page) {
 /** Ancho total de la página y los elementos "hoja" que se pasan del ancho (para encontrar la causa). */
 async function medir(page: Page, ancho: number) {
   return page.evaluate((ancho) => {
-    const sePasa = (el: Element) => el.getBoundingClientRect().right > ancho + 1;
+    // Borde derecho de la caja o de su contenido (un texto sin corte se sale de su caja sin agrandarla).
+    const derecha = (el: Element) => {
+      const r = el.getBoundingClientRect();
+      return r.left + Math.max(r.width, el.scrollWidth);
+    };
+    const sePasa = (el: Element) => derecha(el) > ancho + 1;
     const culpables = [...document.querySelectorAll('body *')]
       .filter((el) => sePasa(el) && el.getClientRects().length > 0 && ![...el.children].some(sePasa))
       .slice(0, 5)
       .map((el) => {
         const clases = typeof el.className === 'string' ? el.className.slice(0, 80) : '';
         const texto = (el.textContent ?? '').trim().slice(0, 40);
-        return `<${el.tagName.toLowerCase()} class="${clases}"> "${texto}" → ${Math.round(el.getBoundingClientRect().right)} px`;
+        return `<${el.tagName.toLowerCase()} class="${clases}"> "${texto}" → ${Math.round(derecha(el))} px`;
       });
     return { scrollWidth: document.documentElement.scrollWidth, culpables };
   }, ancho);
@@ -73,3 +78,10 @@ for (const { nombre, ruta } of paginasDelBuild()) {
     });
   });
 }
+
+test('el encabezado sigue fijo arriba al bajar (overflow-x: clip no rompe el sticky)', async ({ page }) => {
+  await page.goto('/');
+  await page.evaluate(() => window.scrollTo(0, 2000));
+  await expect(page.locator('[data-header]')).toBeInViewport();
+  expect(await page.locator('[data-header]').evaluate((el) => el.getBoundingClientRect().top)).toBe(0);
+});
