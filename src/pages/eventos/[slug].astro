@@ -13,7 +13,8 @@ import Header from '@/components/sections/Header.astro';
 import Layout from '@/layouts/Layout.astro';
 import Compartir from '@/components/eventos/Compartir.astro';
 import { textoCompartir } from '@/lib/compartir';
-import { OG_ALTO, OG_ANCHO } from '@/lib/og';
+import { COLORES } from '@/lib/contraste';
+import { OG_ALTO, OG_ANCHO, ogDeFlyerDelBuild } from '@/lib/og';
 import { getSitio, getTodosLosEventos } from '@/lib/data';
 import { costoTexto, ETIQUETAS_FORMATO, fechaLarga, finalizado, horario, imagenDeEvento, rutaEvento } from '@/lib/eventos';
 import { formatearRango, isoConOffset, vencimientoEvento } from '@/lib/fechas';
@@ -40,19 +41,21 @@ const costo = costoTexto(evento);
 
 // Para compartir (WhatsApp, Instagram): JPEG de 1200×630, lo que esperan las vistas previas.
 // El flyer va entero sobre fondo navy, para no cortarle el texto: lo arma ./[slug]/og.jpg.ts
-// (el fit 'contain' de Astro no agrega el fondo). La foto del tipo se recorta con astro:assets.
-const og =
-  typeof evento.flyer === 'string'
-    ? { src: `${rutaEvento(evento)}og.jpg`, ancho: OG_ANCHO, alto: OG_ALTO }
-    : await getImage({
-        src: imagen,
-        width: OG_ANCHO,
-        height: OG_ALTO,
-        fit: 'cover',
-        format: 'jpeg',
-        quality: 80,
-        ...(esRemota(imagen) ? { inferSize: true } : {}),
-      }).then((img) => ({ src: img.src, ancho: Number(img.attributes.width), alto: Number(img.attributes.height) }));
+// (el fit 'contain' de Astro no agrega el fondo). Sin flyer, o si no se pudo armar (queda un
+// aviso [og] en el log), la foto del tipo recortada con astro:assets.
+const ogFlyer = typeof evento.flyer === 'string' ? await ogDeFlyerDelBuild(evento.flyer, COLORES.navy) : undefined;
+const fotoOg = typeof evento.flyer === 'string' ? FOTOS_POR_CATEGORIA[evento.categoria] : imagen;
+const og = ogFlyer
+  ? { src: `${rutaEvento(evento)}og.jpg`, ancho: OG_ANCHO, alto: OG_ALTO }
+  : await getImage({
+      src: fotoOg,
+      width: OG_ANCHO,
+      height: OG_ALTO,
+      fit: 'cover',
+      format: 'jpeg',
+      quality: 80,
+      ...(esRemota(fotoOg) ? { inferSize: true } : {}),
+    }).then((img) => ({ src: img.src, ancho: Number(img.attributes.width), alto: Number(img.attributes.height) }));
 // La misma que la canónica (Layout): producción en main, el preview en otras ramas.
 const urlEvento = new URL(rutaEvento(evento), Astro.site).href;
 
