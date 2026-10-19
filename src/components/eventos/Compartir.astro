@@ -1,0 +1,98 @@
+---
+/**
+ * «Compartir» de la página de un evento.
+ * - Celular (pantalla táctil con navigator.share): un botón que abre el menú nativo para compartir.
+ *   Si la persona lo cierra sin elegir, no pasa nada.
+ * - Escritorio: «Compartir por WhatsApp» y «Copiar link». Chrome/Edge en Windows y Safari en Mac
+ *   también tienen navigator.share, pero ahí sirven más estas dos opciones.
+ * Sin JS queda el link de WhatsApp, que funciona solo.
+ */
+import Copy from '@lucide/astro/icons/copy';
+import MessageCircle from '@lucide/astro/icons/message-circle';
+import Share2 from '@lucide/astro/icons/share-2';
+import { urlWhatsappCompartir } from '@/lib/compartir';
+
+interface Props {
+  titulo: string;
+  /** "<título> · <fecha> · <lugar>" (textoCompartir). */
+  texto: string;
+  /** URL canónica del evento. */
+  url: string;
+}
+
+const { titulo, texto, url } = Astro.props;
+
+const claseBoton =
+  'inline-flex min-h-12 items-center justify-center gap-2 rounded-full border-2 border-navy px-6 font-semibold text-navy ' +
+  'transition-colors hover:bg-tint-green motion-reduce:transition-none';
+---
+
+<div data-compartir data-titulo={titulo} data-texto={texto} data-url={url} class="space-y-2">
+  <div class="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
+    <button type="button" data-compartir-nativo hidden class={claseBoton}>
+      <Share2 size={18} aria-hidden="true" />
+      Compartir<span class="sr-only"> este evento</span>
+    </button>
+    <a data-compartir-whatsapp href={urlWhatsappCompartir(texto, url)} target="_blank" rel="noopener noreferrer" class={claseBoton}>
+      <MessageCircle size={18} aria-hidden="true" />
+      Compartir por WhatsApp
+      <span class="sr-only">(abre en otra pestaña)</span>
+    </a>
+    <button type="button" data-compartir-copiar hidden class={claseBoton}>
+      <Copy size={18} aria-hidden="true" />
+      Copiar link<span class="sr-only"> del evento</span>
+    </button>
+  </div>
+  <!-- Siempre en la página (aunque esté vacío): así los lectores de pantalla anuncian el cambio -->
+  <p data-compartir-aviso role="status" aria-live="polite" class="min-h-5 text-sm font-semibold text-green-strong"></p>
+</div>
+
+<script>
+  const caja = document.querySelector<HTMLElement>('[data-compartir]');
+  if (caja) {
+    const { titulo = '', texto = '', url = '' } = caja.dataset;
+    const nativo = caja.querySelector<HTMLButtonElement>('[data-compartir-nativo]')!;
+    const whatsapp = caja.querySelector<HTMLAnchorElement>('[data-compartir-whatsapp]')!;
+    const copiar = caja.querySelector<HTMLButtonElement>('[data-compartir-copiar]')!;
+    const aviso = caja.querySelector<HTMLElement>('[data-compartir-aviso]')!;
+
+    let borrarAviso: number | undefined;
+    const avisar = (mensaje: string) => {
+      aviso.textContent = mensaje;
+      window.clearTimeout(borrarAviso);
+      borrarAviso = window.setTimeout(() => (aviso.textContent = ''), 3000);
+    };
+
+    const mostrarWhatsappYCopiar = () => {
+      nativo.hidden = true;
+      whatsapp.hidden = false;
+      copiar.hidden = !navigator.clipboard;
+    };
+
+    if (typeof navigator.share === 'function' && matchMedia('(pointer: coarse)').matches) {
+      nativo.hidden = false;
+      whatsapp.hidden = true;
+      nativo.addEventListener('click', async () => {
+        try {
+          await navigator.share({ title: titulo, text: texto, url });
+        } catch (error) {
+          // Cerró el menú sin elegir: no es un error.
+          if (error instanceof DOMException && error.name === 'AbortError') return;
+          mostrarWhatsappYCopiar();
+          whatsapp.focus();
+        }
+      });
+    } else {
+      mostrarWhatsappYCopiar();
+    }
+
+    copiar.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(url);
+        avisar('¡Link copiado!');
+      } catch {
+        avisar('No se pudo copiar el link. Copialo de la barra del navegador.');
+      }
+    });
+  }
+</script>

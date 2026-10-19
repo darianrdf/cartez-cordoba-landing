@@ -3,11 +3,13 @@ import { defineConfig } from 'astro/config';
 
 import tailwindcss from '@tailwindcss/vite';
 import react from '@astrojs/react';
+import { siteDeRama } from './src/lib/entorno.ts';
 
 // https://astro.build/config
 export default defineConfig({
-  // URL de producción (se usa para la URL canónica y las URLs absolutas de Open Graph)
-  site: 'https://ateneo-cartez-cordoba.pages.dev',
+  // URL canónica, Open Graph y «Compartir»: producción en main; en otras ramas, su preview
+  // (dev → https://dev.ateneo-cartez-cordoba.pages.dev). Ver siteDeRama en src/lib/entorno.ts.
+  site: siteDeRama(process.env.CF_PAGES_BRANCH),
   output: 'static',
   // Build de los tests e2e (scripts/build-e2e.mjs): aparte, para no pisar dist/.
   outDir: process.env.CONTENIDO_E2E ? './dist-e2e' : './dist',

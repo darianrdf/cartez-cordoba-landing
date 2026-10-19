@@ -11,8 +11,11 @@ import Video from '@lucide/astro/icons/video';
 import Footer from '@/components/sections/Footer.astro';
 import Header from '@/components/sections/Header.astro';
 import Layout from '@/layouts/Layout.astro';
+import Compartir from '@/components/eventos/Compartir.astro';
+import { textoCompartir } from '@/lib/compartir';
+import { COLORES } from '@/lib/contraste';
 import { getSitio, getTodosLosEventos } from '@/lib/data';
-import { costoTexto, ETIQUETAS_FORMATO, fechaLarga, finalizado, horario, imagenDeEvento } from '@/lib/eventos';
+import { costoTexto, ETIQUETAS_FORMATO, fechaLarga, finalizado, horario, imagenDeEvento, rutaEvento } from '@/lib/eventos';
 import { formatearRango, isoConOffset, vencimientoEvento } from '@/lib/fechas';
 import { FOTOS_POR_CATEGORIA } from '@/lib/fotos';
 import { esRemota, propsImagen } from '@/lib/imagenes';
@@ -35,16 +38,19 @@ const imagen = imagenDeEvento(evento, FOTOS_POR_CATEGORIA);
 const hora = horario(evento);
 const costo = costoTexto(evento);
 
-// Para compartir (WhatsApp, Instagram): JPEG de 1200 px de ancho. La foto del tipo se recorta a
-// 1200×630 (lo que esperan las vistas previas); el flyer va entero, para no cortarle el texto.
+// Para compartir (WhatsApp, Instagram): JPEG de 1200×630, lo que esperan las vistas previas.
+// La foto del tipo se recorta; el flyer va entero sobre fondo navy, para no cortarle el texto.
 const og = await getImage({
   src: imagen,
   width: 1200,
-  ...(evento.flyer ? {} : { height: 630, fit: 'cover' as const }),
+  height: 630,
+  ...(evento.flyer ? { fit: 'contain' as const, background: COLORES.navy } : { fit: 'cover' as const }),
   format: 'jpeg',
   quality: 80,
   ...(esRemota(imagen) ? { inferSize: true } : {}),
 });
+// La misma que la canónica (Layout): producción en main, el preview en otras ramas.
+const urlEvento = new URL(rutaEvento(evento), Astro.site).href;
 
 const datos: { termino: string; definicion: string | undefined }[] = [
   { termino: 'Fecha', definicion: fechaLarga(evento.fecha, evento.fechaFin) },
@@ -152,6 +158,8 @@ const datos: { termino: string; definicion: string | undefined }[] = [
               </div>
             )
           }
+
+          <Compartir titulo={evento.titulo} texto={textoCompartir(evento)} url={urlEvento} />
         </div>
       </article>
 
