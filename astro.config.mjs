@@ -9,6 +9,8 @@ export default defineConfig({
   // URL de producción (se usa para la URL canónica y las URLs absolutas de Open Graph)
   site: 'https://ateneo-cartez-cordoba.pages.dev',
   output: 'static',
+  // Build de los tests e2e (scripts/build-e2e.mjs): aparte, para no pisar dist/.
+  outDir: process.env.CONTENIDO_E2E ? './dist-e2e' : './dist',
   // El CSS es chico y es una sola página: inlinearlo evita un recurso que bloquea el render.
   build: { inlineStylesheets: 'always' },
   image: {

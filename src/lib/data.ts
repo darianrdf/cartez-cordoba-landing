@@ -4,8 +4,9 @@
  * src/lib/contenido.ts, con el snapshot src/data/sitio.json si la lectura falla. Los eventos se
  * cargan en el dashboard (sección Eventos, D-23).
  */
+import { readFile } from 'node:fs/promises';
 import snapshot from '@/data/sitio.json';
-import { obtenerContenido, TIMEOUT_POR_DEFECTO_MS, urlStorage, type Contenido } from '@/lib/contenido';
+import { contenidoFijo, obtenerContenido, TIMEOUT_POR_DEFECTO_MS, urlStorage, type Contenido } from '@/lib/contenido';
 import { esProduccion } from '@/lib/entorno';
 import { convertirEventos, eventosAnteriores, eventosProximos } from '@/lib/eventos';
 import { parsearSitio } from '@/lib/sitio';
@@ -39,6 +40,12 @@ let contenidoDelBuild: Promise<Contenido> | undefined;
 
 /** Una sola lectura de Supabase por build, aunque cada sección pida su parte. */
 function contenido(): Promise<Contenido> {
+  // Tests e2e (scripts/build-e2e.mjs): contenido fijo de un archivo, sin leer Supabase.
+  const archivoE2E = variable('CONTENIDO_E2E');
+  if (archivoE2E) {
+    contenidoDelBuild ??= readFile(archivoE2E, 'utf8').then((texto) => contenidoFijo(JSON.parse(texto)));
+    return contenidoDelBuild;
+  }
   contenidoDelBuild ??= obtenerContenido({
     url: variable('SUPABASE_URL'),
     clave: variable('SUPABASE_ANON_KEY'),

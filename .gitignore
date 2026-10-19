@@ -32,3 +32,10 @@ Thumbs.db
 
 # fotos candidatas sin procesar (las elegidas están en src/assets/fotos)
 fotos-candidatas/
+
+# capturas de los tests e2e (Playwright)
+capturas/
+test-results/
+playwright-report/
+.e2e/
+dist-e2e/

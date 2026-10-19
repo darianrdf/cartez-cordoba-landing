@@ -134,6 +134,11 @@ function conEventosValidos(crudo: z.output<typeof contenidoSchema>, log: Pick<Co
   return { ...crudo, eventos: eventosValidos(crudo.eventos, log) };
 }
 
+/** Contenido fijo (tests e2e): se valida igual que el de Supabase, sin leer la red. */
+export function contenidoFijo(crudo: unknown, log: Pick<Console, 'warn'> = console): Contenido {
+  return conEventosValidos(contenidoSchema.parse(crudo), log);
+}
+
 /** Buckets públicos de los que la landing toma imágenes (ver image.remotePatterns). */
 export type BucketPublico = 'galeria' | 'landing';
 
