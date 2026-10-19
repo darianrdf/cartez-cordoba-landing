@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { AA_TEXTO_GRANDE, AA_TEXTO_NORMAL, COLORES, contraste, type Color } from './contraste';
+import { AA_TEXTO_GRANDE, AA_TEXTO_NORMAL, COLORES, contraste, superponer, type Color } from './contraste';
 
 const css = readFileSync(new URL('../styles/global.css', import.meta.url), 'utf8');
 
@@ -29,6 +29,8 @@ const textoNormal: Par[] = [
   ['white', 'green-strong', 'botón Sumate'],
   ['white', 'navy', 'Contacto y hero'],
   ['gold', 'navy', 'acentos dorados sobre navy'],
+  ['gold', 'navy', 'etiqueta del tipo en la tarjeta del evento'],
+  ['white', 'navy', 'badge del organizador en la tarjeta del evento'],
   ['navy', 'gold', 'botones dorados de Contacto'],
   ['on-dark-muted', 'navy', 'texto atenuado en Contacto'],
   ['white', 'navy-deep', 'footer'],
@@ -59,5 +61,26 @@ describe('contraste WCAG AA', () => {
     expect(contraste('#000000', '#ffffff')).toBeCloseTo(21, 5);
     expect(contraste(COLORES['green-strong'], COLORES.white)).toBeCloseTo(5.4, 1);
     expect(contraste(COLORES.gold, COLORES.navy)).toBeCloseTo(5.9, 1);
+  });
+});
+
+/** Velo mínimo bajo el texto de la tarjeta del evento (TarjetaEvento.astro: from-black/85 to-black/60). */
+const VELO_TARJETA = 0.6;
+
+describe('texto sobre la foto de la tarjeta del evento', () => {
+  it('superponer mezcla en proporción', () => {
+    expect(superponer('#000000', '#ffffff', 0)).toBe('#ffffff');
+    expect(superponer('#000000', '#ffffff', 1)).toBe('#000000');
+    expect(superponer('#000000', '#ffffff', 0.5)).toBe('#808080');
+  });
+
+  it('peor caso (foto blanca): texto blanco sobre el velo negro ≥ 4.5', () => {
+    const fondo = superponer('#000000', COLORES.white, VELO_TARJETA);
+    expect(contraste(COLORES.white, fondo)).toBeGreaterThanOrEqual(AA_TEXTO_NORMAL);
+  });
+
+  it('el dorado directo sobre el velo no alcanza: por eso el tipo va en una pastilla navy', () => {
+    const fondo = superponer('#000000', COLORES.white, VELO_TARJETA);
+    expect(contraste(COLORES.gold, fondo)).toBeLessThan(AA_TEXTO_NORMAL);
   });
 });

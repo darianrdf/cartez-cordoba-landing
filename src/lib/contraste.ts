@@ -50,3 +50,14 @@ export function contraste(a: string, b: string): number {
 /** Mínimos WCAG AA. */
 export const AA_TEXTO_NORMAL = 4.5;
 export const AA_TEXTO_GRANDE = 3;
+
+/**
+ * Color resultante de pintar `color` con opacidad `alfa` (0 a 1) sobre `fondo`. Sirve para
+ * calcular el contraste de un texto sobre un velo semitransparente (p. ej. negro al 60 % sobre una foto).
+ */
+export function superponer(color: string, fondo: string, alfa: number): string {
+  const c = canales(color);
+  const f = canales(fondo);
+  const mezcla = c.map((v, i) => Math.round(alfa * v + (1 - alfa) * f[i]!));
+  return `#${mezcla.map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+}

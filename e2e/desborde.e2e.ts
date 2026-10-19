@@ -46,6 +46,11 @@ for (const { nombre, ruta } of paginasDelBuild()) {
     test('no se pasa del ancho de la pantalla', async ({ page }, info) => {
       await page.goto(ruta, { waitUntil: 'networkidle' });
       const ancho = page.viewportSize()!.width;
+      // Las fotos son lazy: se cargan todas para que salgan en la captura de página completa.
+      await page.evaluate(async () => {
+        for (const img of document.images) img.loading = 'eager';
+        await Promise.all([...document.images].map((img) => img.decode().catch(() => undefined)));
+      });
       // Captura con el CSS real, para revisar a ojo.
       await page.screenshot({ path: `capturas/${nombre}-${ancho}.png`, fullPage: true, scale: 'css' });
       info.attachments.push({ name: 'captura', path: `capturas/${nombre}-${ancho}.png`, contentType: 'image/png' });
@@ -63,7 +68,7 @@ for (const { nombre, ruta } of paginasDelBuild()) {
           // Tarjetas (home y anteriores)
           poner('[data-evento] h3', `${largo} ${sinEspacios}`);
           poner('[data-evento] dd', sinEspacios);
-          poner('[data-evento] a > div:nth-of-type(2) > span', sinEspacios);
+          poner('[data-evento] a > div:first-of-type > span', sinEspacios);
           // Página del evento
           poner('[data-pagina-evento] h1', `${largo} ${sinEspacios}`);
           poner('main article dd', sinEspacios);

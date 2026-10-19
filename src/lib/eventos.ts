@@ -131,3 +131,13 @@ export function fechaLarga(fecha: string, fechaFin: string = fecha): string {
 
 /** Ruta de la página de un evento. */
 export const rutaEvento = (evento: Pick<Evento, 'slug'>) => `/eventos/${evento.slug}/`;
+
+/**
+ * Badge de la tarjeta: quién organiza. "Organiza la Comisión" o "Organiza: <nombre>"; sin
+ * nombre, no hay badge (un genérico "Evento externo" no dice nada).
+ */
+export function etiquetaOrganizador(evento: Pick<Evento, 'organizaComision' | 'organizadorNombre'>): string | undefined {
+  if (evento.organizaComision) return 'Organiza la Comisión';
+  const nombre = evento.organizadorNombre?.trim();
+  return nombre ? `Organiza: ${nombre}` : undefined;
+}

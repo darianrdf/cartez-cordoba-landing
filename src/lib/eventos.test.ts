@@ -4,6 +4,7 @@ import { CATEGORIAS, COSTOS, FORMATOS, type Categoria } from './tipos';
 import {
   convertirEventos,
   costoTexto,
+  etiquetaOrganizador,
   ETIQUETAS_COSTO,
   ETIQUETAS_FORMATO,
   eventosAnteriores,
@@ -187,5 +188,20 @@ describe('textos del evento', () => {
 
   it('la página del evento es /eventos/<slug>/', () => {
     expect(rutaEvento({ slug: 'jornada-2026-10-24' })).toBe('/eventos/jornada-2026-10-24/');
+  });
+});
+
+describe('etiquetaOrganizador', () => {
+  it('la Comisión tiene su propia etiqueta, aunque haya nombre', () => {
+    expect(etiquetaOrganizador({ organizaComision: true, organizadorNombre: 'Comisión Córdoba' })).toBe('Organiza la Comisión');
+  });
+
+  it.each(['Ateneo CARTEZ', 'CARTEZ', 'CRA'])('organiza %s → "Organiza: %s"', (nombre) => {
+    expect(etiquetaOrganizador({ organizaComision: false, organizadorNombre: nombre })).toBe(`Organiza: ${nombre}`);
+  });
+
+  it('sin nombre no hay etiqueta', () => {
+    expect(etiquetaOrganizador({ organizaComision: false })).toBeUndefined();
+    expect(etiquetaOrganizador({ organizaComision: false, organizadorNombre: '  ' })).toBeUndefined();
   });
 });
