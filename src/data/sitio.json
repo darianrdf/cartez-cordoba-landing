@@ -74,6 +74,12 @@
     "franja_imagen": "franja-ganado-angus.jpg",
     "descripcion_meta": "Comisión Córdoba del Ateneo CARTEZ: jóvenes del sector agropecuario que se forman, participan y construyen el futuro del campo. Sumate.",
     "whatsapp_mensaje": "Hola, quiero sumarme a la Comisión Córdoba",
+    "whatsapp_contactos": [
+      {
+        "nombre": "Pedro",
+        "numero": "+5492954588587"
+      }
+    ],
     "eventos_vacio_texto": "Próximamente vamos a publicar acá eventos rurales, congresos y actividades. ¡Seguinos en Instagram para enterarte primero!",
     "hero_imagen_celular": "hero-celular-ganado-hereford.jpg",
     "conocenos_ateneo_texto": "El Ateneo CARTEZ es el espacio de jóvenes de la Confederación de Asociaciones Rurales de la Tercera Zona (CARTEZ), entidad que representa al sector rural en las provincias de Córdoba, San Luis, La Rioja y Catamarca.\n\nReunimos a jóvenes de distintos puntos de la región con un objetivo común: formarnos, participar y comprometernos con el presente y el futuro del sector agropecuario.\n\nA través de nuestros ateneos y entidades de base, generamos espacios de encuentro, capacitación e intercambio de ideas, promoviendo la formación y participación activa de futuros dirigentes.\n\nBuscamos que cada vez más jóvenes se involucren, aporten sus ideas y su mirada, y sean protagonistas en la construcción de un sector agropecuario más representativo, federal y comprometido con sus comunidades.",

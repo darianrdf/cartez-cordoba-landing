@@ -110,8 +110,22 @@ const eventos = [
   },
 ];
 
+/**
+ * Tres contactos de WhatsApp (D-27), uno con el nombre más largo que acepta el dashboard (30
+ * caracteres): e2e/desborde.e2e.ts verifica que los botones no se pasen del ancho del celular.
+ * Lo usa también e2e/desborde.e2e.ts (CONTACTOS_E2E): mantener los dos iguales.
+ */
+const whatsapp_contactos = [
+  { nombre: 'Pedro', numero: '+5492954588587' },
+  { nombre: 'Lucas', numero: '+5493515551111' },
+  { nombre: 'María Florencia de los Ángeles', numero: '+5493515552222' },
+];
+
 mkdirSync('.e2e', { recursive: true });
-writeFileSync('.e2e/contenido.json', JSON.stringify({ ...snapshot, eventos }, null, 2));
+writeFileSync(
+  '.e2e/contenido.json',
+  JSON.stringify({ ...snapshot, configuracion_sitio: { ...snapshot.configuracion_sitio, whatsapp_contactos }, eventos }, null, 2),
+);
 
 const { status } = spawnSync('npx', ['astro', 'build'], {
   stdio: 'inherit',

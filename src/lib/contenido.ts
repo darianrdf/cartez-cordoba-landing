@@ -8,11 +8,11 @@
  *   versionado (src/data/sitio.json) y se deja un aviso en el log: el build nunca se rompe por esto.
  * - La función devuelve rutas de Storage (`foto_path`, `flyer_path`), no URLs: la URL se arma con
  *   `origen`, que el snapshot también guarda.
- * - Los eventos se validan uno por uno: uno inválido se descarta con un aviso y el resto se usa.
- *   Solo si falta la lista entera (o no es una lista) se cae al snapshot.
+ * - Los eventos y los contactos de WhatsApp se validan uno por uno: uno inválido se descarta con
+ *   un aviso y el resto se usa. Solo si falta la lista entera (o no es una lista) se cae al snapshot.
  */
 import { z } from 'astro/zod';
-import { filaSitioSchema } from './sitio';
+import { contactoWhatsappSchema, filaSitioSchema, type ContactoWhatsappFila } from './sitio';
 import { CATEGORIAS, COSTOS, FORMATOS, ORGANIZADORES } from './tipos';
 
 /** Proyectos de Supabase de los que se acepta contenido (cartez-prod y cartez-dev). */
@@ -106,7 +106,8 @@ export const contenidoSchema = z.object({
   version: z.literal(1),
   generado_en: z.string(),
   entorno: z.enum(['dev', 'prod']),
-  configuracion_sitio: filaSitioSchema,
+  /** Los contactos de WhatsApp se validan después, uno por uno (ver contactosWhatsappValidos). */
+  configuracion_sitio: filaSitioSchema.extend({ whatsapp_contactos: z.array(z.unknown()) }),
   galeria: z.array(fotoGaleriaSchema),
   mesa: z.object({
     etapa: z.string().nullable(),
@@ -116,7 +117,44 @@ export const contenidoSchema = z.object({
   eventos: z.array(z.unknown()),
 });
 
-export type Contenido = Omit<z.output<typeof contenidoSchema>, 'eventos'> & { eventos: FilaEvento[] };
+type ContenidoCrudo = z.output<typeof contenidoSchema>;
+
+export type Contenido = Omit<ContenidoCrudo, 'eventos' | 'configuracion_sitio'> & {
+  configuracion_sitio: Omit<ContenidoCrudo['configuracion_sitio'], 'whatsapp_contactos'> & {
+    whatsapp_contactos: ContactoWhatsappFila[];
+  };
+  eventos: FilaEvento[];
+};
+
+/** Tope de contactos de WhatsApp (el mismo que la base, D-27). */
+export const MAXIMO_CONTACTOS_WHATSAPP = 4;
+
+/**
+ * Valida cada contacto de WhatsApp: uno inválido o con un número repetido se descarta con un
+ * aviso en el log y el resto sigue. Si quedan más de 4, se usan los primeros 4.
+ */
+export function contactosWhatsappValidos(filas: readonly unknown[], log: Pick<Console, 'warn'>): ContactoWhatsappFila[] {
+  const numeros = new Set<string>();
+  const validos = filas.flatMap((fila) => {
+    const resultado = contactoWhatsappSchema.safeParse(fila);
+    const nombre = fila && typeof fila === 'object' && 'nombre' in fila ? String(fila.nombre) : '(sin nombre)';
+    if (!resultado.success) {
+      const problema = resultado.error.issues[0];
+      log.warn(`[contenido] contacto de WhatsApp descartado: ${nombre} (${problema?.path.join('.') || 'contacto'}: ${problema?.message})`);
+      return [];
+    }
+    if (numeros.has(resultado.data.numero)) {
+      log.warn(`[contenido] contacto de WhatsApp descartado: ${nombre} (numero: repetido)`);
+      return [];
+    }
+    numeros.add(resultado.data.numero);
+    return [resultado.data];
+  });
+  if (validos.length > MAXIMO_CONTACTOS_WHATSAPP) {
+    log.warn(`[contenido] llegaron ${validos.length} contactos de WhatsApp: se usan los primeros ${MAXIMO_CONTACTOS_WHATSAPP}`);
+  }
+  return validos.slice(0, MAXIMO_CONTACTOS_WHATSAPP);
+}
 
 /** Valida cada evento: uno inválido se descarta con un aviso en el log y el resto sigue. */
 export function eventosValidos(filas: readonly unknown[], log: Pick<Console, 'warn'>): FilaEvento[] {
@@ -130,13 +168,21 @@ export function eventosValidos(filas: readonly unknown[], log: Pick<Console, 'wa
   });
 }
 
-function conEventosValidos(crudo: z.output<typeof contenidoSchema>, log: Pick<Console, 'warn'>): Contenido {
-  return { ...crudo, eventos: eventosValidos(crudo.eventos, log) };
+/** Valida uno por uno los eventos y los contactos de WhatsApp. */
+function depurar(crudo: ContenidoCrudo, log: Pick<Console, 'warn'>): Contenido {
+  return {
+    ...crudo,
+    configuracion_sitio: {
+      ...crudo.configuracion_sitio,
+      whatsapp_contactos: contactosWhatsappValidos(crudo.configuracion_sitio.whatsapp_contactos, log),
+    },
+    eventos: eventosValidos(crudo.eventos, log),
+  };
 }
 
 /** Contenido fijo (tests e2e): se valida igual que el de Supabase, sin leer la red. */
 export function contenidoFijo(crudo: unknown, log: Pick<Console, 'warn'> = console): Contenido {
-  return conEventosValidos(contenidoSchema.parse(crudo), log);
+  return depurar(contenidoSchema.parse(crudo), log);
 }
 
 /** Buckets públicos de los que la landing toma imágenes (ver image.remotePatterns). */
@@ -175,7 +221,7 @@ export async function obtenerContenido(opciones: OpcionesContenido): Promise<Con
     log.warn(
       `[contenido] ⚠ No se pudo leer Supabase (${motivo}). Se usa el snapshot del ${snapshotCrudo.generado_en} (${snapshotCrudo.entorno}).`,
     );
-    return conEventosValidos(snapshotCrudo, log);
+    return depurar(snapshotCrudo, log);
   };
 
   if (!url?.trim() || !clave?.trim()) return usarSnapshot('faltan SUPABASE_URL o SUPABASE_ANON_KEY');
@@ -211,11 +257,11 @@ export async function obtenerContenido(opciones: OpcionesContenido): Promise<Con
       const problema = resultado.error.issues[0];
       return usarSnapshot(`respuesta inválida en ${problema?.path.join('.') || 'la raíz'}: ${problema?.message}`);
     }
-    const vivo = conEventosValidos(resultado.data, log);
+    const vivo = depurar(resultado.data, log);
     const comparacion =
       vivo.entorno !== snapshotCrudo.entorno
         ? `snapshot de ${snapshotCrudo.entorno}, no se compara`
-        : mismoContenido(vivo, conEventosValidos(snapshotCrudo, { warn: () => undefined }))
+        : mismoContenido(vivo, depurar(snapshotCrudo, { warn: () => undefined }))
           ? 'snapshot al día'
           : '⚠ el snapshot versionado difiere: corré npm run snapshot y commitealo';
     log.info(

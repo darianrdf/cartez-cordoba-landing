@@ -11,7 +11,7 @@ const { contacto, sumate } = await getSitio();
 const claseBoton =
   'flex min-h-14 w-full items-center justify-center gap-3 rounded-full bg-gold px-6 font-semibold text-navy shadow-lg ' +
   'transition-colors duration-200 hover:bg-white motion-reduce:transition-none';
-const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.instagram);
+const hayContacto = Boolean(contacto.whatsapp.length || contacto.mail || contacto.instagram);
 ---
 
 <section id="contacto" aria-labelledby="contacto-titulo" class="bg-navy text-white">
@@ -29,21 +29,19 @@ const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.insta
 
     {
       hayContacto ? (
-        <ul class="mx-auto flex max-w-md flex-col gap-4">
-          {contacto.whatsapp && (
-            <li class="aparecer">
-              <a
-                href={whatsappUrl(contacto.whatsapp, contacto.whatsappMensaje)}
-                target="_blank"
-                rel="noopener noreferrer"
-                class={claseBoton}
-              >
-                <MessageCircle size={22} aria-hidden="true" />
-                Escribinos por WhatsApp
-                <span class="sr-only">(abre en otra pestaña)</span>
+        <ul data-contactos class="mx-auto flex max-w-md flex-col gap-4">
+          {/* Un botón por contacto visible, en el orden del dashboard; el script de abajo los mezcla. */}
+          {contacto.whatsapp.map(({ nombre, numero }) => (
+            <li data-whatsapp class="aparecer">
+              <a href={whatsappUrl(numero, contacto.whatsappMensaje)} target="_blank" rel="noopener noreferrer" class={claseBoton}>
+                <MessageCircle size={22} aria-hidden="true" class="shrink-0" />
+                <span class="min-w-0 text-balance wrap-anywhere">
+                  Escribile a {nombre}
+                  <span class="sr-only"> por WhatsApp (abre en otra pestaña)</span>
+                </span>
               </a>
             </li>
-          )}
+          ))}
           {contacto.instagram && (
             <li class="aparecer">
               <a href={instagramUrl(contacto.instagram)} target="_blank" rel="noopener noreferrer" class={claseBoton}>
@@ -74,3 +72,16 @@ const hayContacto = Boolean(contacto.whatsapp || contacto.mail || contacto.insta
     }
   </div>
 </section>
+
+<script>
+  // Orden al azar en cada visita, para repartir los mensajes entre los contactos de WhatsApp
+  // (D-27 del dashboard). Solo se mueven los de WhatsApp: Instagram y mail quedan después.
+  // Sin JS quedan en el orden del dashboard.
+  import { mezclar } from '@/lib/mezclar';
+
+  const lista = document.querySelector<HTMLElement>('[data-contactos]');
+  if (lista) {
+    const contactos = [...lista.querySelectorAll<HTMLElement>(':scope > [data-whatsapp]')];
+    if (contactos.length > 1) lista.prepend(...mezclar(contactos));
+  }
+</script>

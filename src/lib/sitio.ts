@@ -24,6 +24,18 @@ const referenciaImagen = z
     message: 'Se espera un nombre de archivo de src/assets/fotos/ o una URL https',
   });
 
+/**
+ * Un contacto de WhatsApp (dashboard D-27): celular argentino +549 y 10 dígitos, la misma regla
+ * que la base. contenido_landing() manda solo los visibles; `visible` se acepta por si acaso.
+ */
+export const contactoWhatsappSchema = z.object({
+  nombre: z.string().trim().min(1).max(30),
+  numero: z.string().regex(/^\+549\d{10}$/, 'Se espera +549 y 10 dígitos'),
+  visible: z.boolean().optional(),
+});
+
+export type ContactoWhatsappFila = z.output<typeof contactoWhatsappSchema>;
+
 export const filaSitioSchema = z.object({
   nombre: z.string().min(1),
   organizacion: z.string().min(1),
@@ -31,7 +43,9 @@ export const filaSitioSchema = z.object({
   hero_frase: z.string(),
   instagram: opcional,
   mail: opcional,
-  whatsapp: opcional,
+  // La clave vieja `whatsapp` (en desuso desde D-27) ya no se lee: zod la descarta.
+  /** Llegan ya depurados por contenido.ts (un contacto inválido se descarta allá, con aviso). */
+  whatsapp_contactos: z.array(contactoWhatsappSchema).default([]),
   whatsapp_mensaje: opcional,
   conocenos_ateneo_titulo: z.string(),
   /** Párrafos separados por una línea en blanco. */
@@ -70,7 +84,10 @@ export function parsearSitio(fila: unknown, resolverImagen: ResolverImagen): Sit
     contacto: {
       instagram: f.instagram?.replace(/^@/, ''),
       mail: f.mail,
-      whatsapp: f.whatsapp?.replace(/\D/g, '') || undefined,
+      // En el orden del dashboard (Contacto.astro los mezcla en el navegador); solo dígitos, para wa.me.
+      whatsapp: f.whatsapp_contactos
+        .filter((c) => c.visible !== false)
+        .map((c) => ({ nombre: c.nombre, numero: c.numero.replace(/\D/g, '') })),
       whatsappMensaje: f.whatsapp_mensaje,
     },
     conocenos: {

@@ -75,6 +75,8 @@ for (const { nombre, ruta } of paginasDelBuild()) {
           poner('#programa ~ ol h3, #programa ~ ol p', sinEspacios);
           // Mail de Sumate y del pie
           poner('a[href^="mailto:"] > span', `${sinEspacios}@gmail.com`);
+          // Botones de WhatsApp de Sumate
+          poner('a[href^="https://wa.me/"] > span', `Escribile a ${sinEspacios}`);
           poner('footer a[href^="mailto:"]', `${sinEspacios}@gmail.com`);
         },
         [LARGO, SIN_ESPACIOS],
@@ -83,6 +85,68 @@ for (const { nombre, ruta } of paginasDelBuild()) {
     });
   });
 }
+
+/**
+ * Sumate: un botón por contacto de WhatsApp (D-27), en orden al azar. Los mismos 3 contactos que
+ * scripts/build-e2e.mjs, en el orden del dashboard.
+ */
+const CONTACTOS_E2E = [
+  { nombre: 'Pedro', numero: '5492954588587' },
+  { nombre: 'Lucas', numero: '5493515551111' },
+  { nombre: 'María Florencia de los Ángeles', numero: '5493515552222' },
+];
+
+/** Números de los botones de WhatsApp de Sumate, en el orden en que están en la página. */
+async function numerosEnPantalla(page: Page) {
+  return page
+    .locator('#contacto [data-contactos] > li a[href^="https://wa.me/"]')
+    .evaluateAll((links) => links.map((a) => new URL((a as HTMLAnchorElement).href).pathname.slice(1)));
+}
+
+test.describe('Sumate: botones de WhatsApp', () => {
+  test('están los 3 contactos, con su nombre y el mensaje, y no se pasan del ancho', async ({ page }) => {
+    await page.goto('/', { waitUntil: 'networkidle' });
+    const ancho = page.viewportSize()!.width;
+    for (const { nombre, numero } of CONTACTOS_E2E) {
+      const boton = page.getByRole('link', { name: `Escribile a ${nombre} por WhatsApp (abre en otra pestaña)` });
+      await boton.scrollIntoViewIfNeeded();
+      await expect(boton).toBeVisible();
+      expect(await boton.getAttribute('href')).toMatch(new RegExp(`^https://wa\\.me/${numero}\\?text=.+`));
+      const caja = (await boton.boundingBox())!;
+      expect(caja.x + caja.width, nombre).toBeLessThanOrEqual(ancho);
+    }
+    // El orden es al azar: se comparan como conjunto.
+    expect((await numerosEnPantalla(page)).sort()).toEqual(CONTACTOS_E2E.map((c) => c.numero).sort());
+    await sinRedDeSeguridad(page);
+    await esperarSinDesborde(page);
+  });
+
+  test('el orden se mezcla en el navegador; Instagram y mail quedan después', async ({ page }) => {
+    // Con este azar fijo, mezclar() deja [b, c, a] (ver src/lib/mezclar.test.ts).
+    await page.addInitScript(() => {
+      Math.random = () => 0;
+    });
+    await page.goto('/', { waitUntil: 'networkidle' });
+    const [a, b, c] = CONTACTOS_E2E.map((x) => x.numero);
+    expect(await numerosEnPantalla(page)).toEqual([b, c, a]);
+    const tipos = await page
+      .locator('#contacto [data-contactos] > li')
+      .evaluateAll((items) => items.map((li) => ((li as HTMLElement).dataset.whatsapp === undefined ? 'otro' : 'whatsapp')));
+    expect(tipos.slice(0, 3)).toEqual(['whatsapp', 'whatsapp', 'whatsapp']);
+    expect(tipos.slice(3).every((t) => t === 'otro')).toBe(true);
+    await sinRedDeSeguridad(page);
+    await esperarSinDesborde(page);
+  });
+
+  test.describe('sin JavaScript', () => {
+    test.use({ javaScriptEnabled: false });
+
+    test('quedan los 3 en el orden del dashboard', async ({ page }) => {
+      await page.goto('/');
+      expect(await numerosEnPantalla(page)).toEqual(CONTACTOS_E2E.map((c) => c.numero));
+    });
+  });
+});
 
 test('el encabezado sigue fijo arriba al bajar (overflow-x: clip no rompe el sticky)', async ({ page }) => {
   await page.goto('/');

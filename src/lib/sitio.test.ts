@@ -11,7 +11,10 @@ const filaBase: FilaSitio = {
   hero_frase: 'Frase',
   instagram: 'cba.ateneocartez',
   mail: 'comisioncordobaateneocartez@gmail.com',
-  whatsapp: '5492954588587',
+  whatsapp_contactos: [
+    { nombre: 'Pedro', numero: '+5492954588587' },
+    { nombre: 'Lucas', numero: '+5493515551111' },
+  ],
   whatsapp_mensaje: 'Hola, quiero sumarme a la Comisión Córdoba',
   conocenos_ateneo_titulo: 'A',
   conocenos_ateneo_texto: 'Primero.\n\nSegundo.',
@@ -47,7 +50,10 @@ describe('parsearSitio', () => {
     expect(sitio.contacto).toEqual({
       instagram: 'cba.ateneocartez',
       mail: 'comisioncordobaateneocartez@gmail.com',
-      whatsapp: '5492954588587',
+      whatsapp: [
+        { nombre: 'Pedro', numero: '5492954588587' },
+        { nombre: 'Lucas', numero: '5493515551111' },
+      ],
       whatsappMensaje: 'Hola, quiero sumarme a la Comisión Córdoba',
     });
     expect(sitio.conocenos.ateneo).toEqual({
@@ -66,25 +72,35 @@ describe('parsearSitio', () => {
   });
 
   it('los medios de contacto vacíos, en blanco o null quedan sin cargar', () => {
-    const sitio = parsear({ ...filaBase, instagram: '', mail: '   ', whatsapp: null });
+    const sitio = parsear({ ...filaBase, instagram: '', mail: '   ', whatsapp_contactos: [] });
     expect(sitio.contacto.instagram).toBeUndefined();
     expect(sitio.contacto.mail).toBeUndefined();
-    expect(sitio.contacto.whatsapp).toBeUndefined();
+    expect(sitio.contacto.whatsapp).toEqual([]);
   });
 
   it('los medios de contacto pueden faltar por completo', () => {
-    const { instagram, mail, whatsapp, whatsapp_mensaje, ...sinContacto } = filaBase;
-    expect(parsear(sinContacto).contacto).toEqual({});
+    const { instagram, mail, whatsapp_contactos, whatsapp_mensaje, ...sinContacto } = filaBase;
+    expect(parsear(sinContacto).contacto).toEqual({ whatsapp: [] });
   });
 
-  it('normaliza el usuario de Instagram y el número de WhatsApp', () => {
-    const sitio = parsear({ ...filaBase, instagram: '@cba.ateneocartez', whatsapp: '+54 9 2954 58-8587' });
-    expect(sitio.contacto.instagram).toBe('cba.ateneocartez');
-    expect(sitio.contacto.whatsapp).toBe('5492954588587');
+  it('normaliza el usuario de Instagram', () => {
+    expect(parsear({ ...filaBase, instagram: '@cba.ateneocartez' }).contacto.instagram).toBe('cba.ateneocartez');
   });
 
-  it('un WhatsApp sin dígitos cuenta como no cargado', () => {
-    expect(parsear({ ...filaBase, whatsapp: '-' }).contacto.whatsapp).toBeUndefined();
+  it('WhatsApp: conserva el orden del dashboard, saca los ocultos y deja el número solo en dígitos', () => {
+    const whatsapp_contactos = [
+      { nombre: 'Oculto', numero: '+5493515559999', visible: false },
+      { nombre: 'Lucas', numero: '+5493515551111' },
+      { nombre: 'Pedro', numero: '+5492954588587', visible: true },
+    ];
+    expect(parsear({ ...filaBase, whatsapp_contactos }).contacto.whatsapp).toEqual([
+      { nombre: 'Lucas', numero: '5493515551111' },
+      { nombre: 'Pedro', numero: '5492954588587' },
+    ]);
+  });
+
+  it('ya no lee la clave vieja whatsapp (D-27)', () => {
+    expect(parsear({ ...filaBase, whatsapp: '5490000000000', whatsapp_contactos: [] }).contacto.whatsapp).toEqual([]);
   });
 
   it('descarta objetivos sin título y recorta espacios', () => {

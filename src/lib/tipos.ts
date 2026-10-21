@@ -108,6 +108,13 @@ export interface Objetivo {
   descripcion: string;
 }
 
+/** Un botón «Escribile a …» de la sección Contacto. */
+export interface ContactoWhatsapp {
+  nombre: string;
+  /** Número internacional solo con dígitos, ej. "5492954588587". */
+  numero: string;
+}
+
 /** Contenido editable del sitio (textos y contactos). */
 export interface Sitio {
   nombre: string;
@@ -119,8 +126,9 @@ export interface Sitio {
     /** Usuario sin @, ej. "cba.ateneocartez". */
     instagram?: string;
     mail?: string;
-    /** Número internacional solo con dígitos, ej. "5492954588587". */
-    whatsapp?: string;
+    /** Contactos de WhatsApp visibles, en el orden del dashboard (vacío: sin botón). */
+    whatsapp: ContactoWhatsapp[];
+    /** Mensaje precargado, el mismo para todos los contactos. */
     whatsappMensaje?: string;
   };
   conocenos: {

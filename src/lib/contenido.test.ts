@@ -1,6 +1,8 @@
 import { describe, expect, it, vi } from 'vitest';
 import snapshot from '../data/sitio.json';
 import {
+  contactosWhatsappValidos,
+  contenidoFijo,
   contenidoSchema,
   eventosValidos,
   mismoContenido,
@@ -240,6 +242,71 @@ describe('eventos', () => {
   });
 });
 
+describe('contactos de WhatsApp (D-27)', () => {
+  const PEDRO = { nombre: 'Pedro', numero: '+5492954588587' };
+  const LUCAS = { nombre: 'Lucas', numero: '+5493515551111' };
+
+  /** Respuesta con otra lista de contactos (y la clave vieja whatsapp, como la manda la base). */
+  function conContactos(whatsapp_contactos: unknown) {
+    const respuesta = respuestaDe();
+    return { ...respuesta, configuracion_sitio: { ...respuesta.configuracion_sitio, whatsapp: '5492954588587', whatsapp_contactos } };
+  }
+
+  async function leer(whatsapp_contactos: unknown) {
+    const fetch = vi.fn(async () => respuestaHttp(conContactos(whatsapp_contactos)));
+    const { log, opciones: o } = opciones({ fetch });
+    return { contenido: await obtenerContenido(o), log };
+  }
+
+  it('trae los contactos en orden; la clave vieja whatsapp de más no molesta', async () => {
+    const { contenido, log } = await leer([LUCAS, PEDRO]);
+    expect(contenido.configuracion_sitio.whatsapp_contactos).toEqual([LUCAS, PEDRO]);
+    expect(contenido.configuracion_sitio).not.toHaveProperty('whatsapp');
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+
+  it('descarta solo los contactos inválidos, con un aviso cada uno, y usa los demás (el build sigue)', async () => {
+    const { contenido, log } = await leer([
+      { nombre: 'Sin más', numero: '5493515552222' },
+      LUCAS,
+      { nombre: '', numero: '+5493515553333' },
+      'no es un contacto',
+      { ...PEDRO, numero: LUCAS.numero },
+      PEDRO,
+    ]);
+    expect(contenido.origen).toBe(DEV);
+    expect(contenido.configuracion_sitio.whatsapp_contactos).toEqual([LUCAS, PEDRO]);
+    const avisos = log.warn.mock.calls.map(([aviso]) => aviso as string);
+    expect(avisos).toEqual([
+      expect.stringMatching(/contacto de WhatsApp descartado: Sin más \(numero: /),
+      expect.stringMatching(/contacto de WhatsApp descartado:  \(nombre: /),
+      expect.stringMatching(/contacto de WhatsApp descartado: \(sin nombre\)/),
+      '[contenido] contacto de WhatsApp descartado: Pedro (numero: repetido)',
+    ]);
+  });
+
+  it('con más de 4 usa los primeros 4 y avisa', async () => {
+    const cinco = [1, 2, 3, 4, 5].map((n) => ({ nombre: `C${n}`, numero: `+549351555000${n}` }));
+    const { contenido, log } = await leer(cinco);
+    expect(contenido.configuracion_sitio.whatsapp_contactos).toEqual(cinco.slice(0, 4));
+    expect(log.warn).toHaveBeenCalledWith(expect.stringContaining('llegaron 5 contactos de WhatsApp'));
+  });
+
+  it('si falta la lista o no es una lista, usa el snapshot (base sin migrar)', async () => {
+    for (const lista of [undefined, { 0: PEDRO }]) {
+      const { contenido, log } = await leer(lista);
+      expect(contenido.origen).toBe(snapshot.origen);
+      expect(log.warn).toHaveBeenCalledWith(expect.stringMatching(/respuesta inválida en configuracion_sitio\.whatsapp_contactos/));
+    }
+  });
+
+  it('contactosWhatsappValidos() con una lista vacía no avisa nada', () => {
+    const log = { warn: vi.fn() };
+    expect(contactosWhatsappValidos([], log)).toEqual([]);
+    expect(log.warn).not.toHaveBeenCalled();
+  });
+});
+
 describe('urlStorage', () => {
   it('arma la URL pública del bucket galeria (mesa)', () => {
     expect(urlStorage(PROD, 'galeria', 'mesa/2026/ana.webp')).toBe(
@@ -255,8 +322,7 @@ describe('urlStorage', () => {
 });
 
 describe('mismoContenido', () => {
-  const crudo = contenidoSchema.parse(snapshot);
-  const base = { ...crudo, eventos: eventosValidos(crudo.eventos, { warn: vi.fn() }) };
+  const base = contenidoFijo(snapshot, { warn: vi.fn() });
   it('ignora la fecha de generación', () => {
     expect(mismoContenido(base, { ...base, generado_en: 'otra' })).toBe(true);
   });
