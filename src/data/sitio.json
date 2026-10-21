@@ -19,13 +19,13 @@
         "cargo": "Segundo coordinador",
         "orden": 2,
         "nombre": "Lucas Costamagna",
-        "foto_path": null
+        "foto_path": "2026/10/fd1bfd75-a9bf-4c4c-bd43-6a9ae22c9556.webp"
       },
       {
         "cargo": "Secretario",
         "orden": 3,
         "nombre": "Joaquin Rivarola",
-        "foto_path": null
+        "foto_path": "2026/10/bd8399f3-dc44-46aa-83fc-69e351641eff.webp"
       },
       {
         "cargo": "Secretario",
@@ -36,10 +36,65 @@
     ]
   },
   "entorno": "prod",
-  "eventos": [],
+  "eventos": [
+    {
+      "id": "2cfb17c2-4ddd-4c01-bb5a-a4f3ce4a5467",
+      "link": null,
+      "slug": "jornada-de-gremialismo-agropecuario-2026-10-20",
+      "tipo": "Congreso",
+      "costo": "gratuito",
+      "fecha": "2026-10-20",
+      "lugar": "Sociedad Rural de Río Cuarto, Río Cuarto, Córdoba",
+      "marco": "ArgenCarne Río Cuarto 2026",
+      "titulo": "Jornada de Gremialismo Agropecuario",
+      "formato": "presencial",
+      "hora_fin": null,
+      "programa": [],
+      "acompanan": [],
+      "categoria": "congreso",
+      "fecha_fin": "2026-10-25",
+      "flyer_path": "eventos/2026/10/1a178210-3784-414a-b587-78ad7baa4eeb.webp",
+      "costo_monto": null,
+      "descripcion": "Jornada de formación para jóvenes dirigentes rurales: gremialismo, liderazgo, recambio generacional, negociación y comunicación del agro. En ArgenCarne 2026.",
+      "hora_inicio": null,
+      "organizador": "externo",
+      "link_transmision": null,
+      "descripcion_larga": "El Ateneo CARTEZ organiza una jornada dedicada a formar a la próxima generación de dirigentes rurales. A lo largo de cinco módulos, referentes de CRA, CARTEZ y la Sociedad Rural de Río Cuarto abordan qué es el gremialismo y cómo representarlo, cómo liderar instituciones y construir el recambio generacional, herramientas de negociación, comunicación del agro y la decisión personal de ser dirigente.",
+      "organiza_comision": false,
+      "comision_participa": true,
+      "organizador_nombre": "Ateneo CARTEZ"
+    },
+    {
+      "id": "145a301a-3b3c-41f4-9f69-7232fcc88232",
+      "link": "https://forms.gle/Fg7TDg9ERF8q8FgT9",
+      "slug": "jornada-nuevos-horizontes-para-la-cadena-de-carnes-bovinas-2026-10-29",
+      "tipo": "Charla",
+      "costo": "gratuito",
+      "fecha": "2026-10-29",
+      "lugar": "AUDITORIO DE LA REFORMA FCA-UNC",
+      "marco": null,
+      "titulo": "Jornada Nuevos Horizontes para la cadena de Carnes Bovinas",
+      "formato": "presencial",
+      "hora_fin": null,
+      "programa": [],
+      "acompanan": [],
+      "categoria": "charla",
+      "fecha_fin": "2026-10-29",
+      "flyer_path": "eventos/2026/10/7cc23754-6a4a-4db8-8150-1fa5ed8f8074.webp",
+      "costo_monto": null,
+      "descripcion": "Jueves 29 de octubre - 15hs - Auditorio de la Reforma, FCA-UNC.\n\n📅 Guardá la fecha. Entrada libre y gratuita, con inscripción previa.",
+      "hora_inicio": "15:00",
+      "organizador": "externo",
+      "link_transmision": null,
+      "descripcion_larga": "Nos acompañan:\n🎤 Mara Echazarreta (Adm. de RRHH, Consultora Humanus) – “Del conocimiento técnico al liderazgo: el desafío de dirigir equipos en el ámbito rural”\n🎤 Juan Bollatti (Ing. MSc, Gerente del CENAB Biofarma) – “Investigación aplicada en engorde a corral: evidencia local para la toma de decisiones”\n🎤 Martín Giletta (Lic. Mgtr, Consultor independiente y UCC) – “La ganadería argentina ante un escenario inédito: ¿podremos aprovecharlo?”",
+      "organiza_comision": false,
+      "comision_participa": true,
+      "organizador_nombre": "UNC CATEDRA DE CARNE VACUNA"
+    }
+  ],
   "galeria": [],
   "version": 1,
-  "generado_en": "2026-10-18T22:50:52.508712+00:00",
+  "generado_en": "2026-10-21T22:21:48.990784+00:00",
   "configuracion_sitio": {
     "mail": "comisioncordobaateneocartez@gmail.com",
     "nombre": "Comisión Córdoba",
